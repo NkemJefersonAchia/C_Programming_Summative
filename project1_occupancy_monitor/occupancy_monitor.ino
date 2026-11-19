@@ -38,3 +38,23 @@
 #define SERIAL_BAUD_RATE 9600  /* Serial communication baud rate              */
 
 /* ---------------------------------------------------------------------------
+ * Data Structures
+ * --------------------------------------------------------------------------- */
+
+/**
+ * @struct OccupancyInfo
+ * @brief  Holds all occupancy-related counters for the monitored room.
+ *
+ * @field currentCount  Number of people currently in the room (0..MAX_CAPACITY)
+ * @field maxCapacity   Maximum allowed occupancy
+ * @field totalEntries  Cumulative count of successful entry events
+ * @field totalExits    Cumulative count of successful exit events
+ */
+typedef struct {
+    int currentCount;
+    int maxCapacity;
+    unsigned long totalEntries;
+    unsigned long totalExits;
+} OccupancyInfo;
+
+/* ---------------------------------------------------------------------------
