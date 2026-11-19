@@ -96,3 +96,47 @@ String getTimestamp(void);
 void setup() {
     initSystem();
 }
+
+/* ===========================================================================
+ * loop() — Main program loop. Reads buttons, updates outputs. No delay().
+ * =========================================================================== */
+void loop() {
+    /* Safety check: if allocation failed, do nothing */
+    if (pOccupancy == NULL) {
+        return;
+    }
+
+    unsigned long currentMillis = millis();
+
+    /* --- Read button states (active LOW with INPUT_PULLUP) --- */
+    int entryReading = digitalRead(ENTRY_BUTTON_PIN);
+    int exitReading  = digitalRead(EXIT_BUTTON_PIN);
+
+    /* --- Entry button: detect falling edge with debounce --- */
+    if (entryReading == LOW && prevEntryState == HIGH) {
+        if ((currentMillis - lastEntryPressTime) >= DEBOUNCE_DELAY) {
+            handleEntry(pOccupancy);
+            lastEntryPressTime = currentMillis;
+        }
+    }
+    prevEntryState = entryReading;
+
+    /* --- Exit button: detect falling edge with debounce --- */
+    if (exitReading == LOW && prevExitState == HIGH) {
+        if ((currentMillis - lastExitPressTime) >= DEBOUNCE_DELAY) {
+            handleExit(pOccupancy);
+            lastExitPressTime = currentMillis;
+        }
+    }
+    prevExitState = exitReading;
+
+    /* --- Periodically refresh the LCD (every LCD_UPDATE_INTERVAL ms) --- */
+    if ((currentMillis - lastLCDUpdateTime) >= LCD_UPDATE_INTERVAL) {
+        updateLCD(pOccupancy);
+        lastLCDUpdateTime = currentMillis;
+    }
+
+    /* --- Continuously update LEDs to reflect current state --- */
+    updateLEDs(pOccupancy);
+}
+
