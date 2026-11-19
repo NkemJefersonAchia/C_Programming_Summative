@@ -30,3 +30,11 @@
 #define RED_LED_PIN       9   /* Red LED   — at maximum capacity             */
 
 /* ---------------------------------------------------------------------------
+ * System Constants
+ * --------------------------------------------------------------------------- */
+#define MAX_CAPACITY       10  /* Maximum number of people allowed in the room */
+#define DEBOUNCE_DELAY    200  /* Button debounce interval in milliseconds     */
+#define LCD_UPDATE_INTERVAL 500 /* LCD refresh interval in milliseconds       */
+#define SERIAL_BAUD_RATE 9600  /* Serial communication baud rate              */
+
+/* ---------------------------------------------------------------------------
