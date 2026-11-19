@@ -48,3 +48,63 @@ NC='\033[0m'  # No Color / Reset
 # -----------------------------------------------------------------------------
 log_activity() {
     local message="$1"
+    local timestamp
+    timestamp="$(date '+%Y-%m-%d %H:%M:%S')"
+    echo "[${timestamp}] ${message}" >> "${LOG_FILE}" 2>/dev/null
+    if [[ $? -ne 0 ]]; then
+        echo -e "${RED}Warning: Could not write to activity log.${NC}"
+    fi
+}
+
+# -----------------------------------------------------------------------------
+# validate_threshold()
+# Description : Validates that a threshold value is a number between 1 and 100.
+# Parameters  : $1 — The value to validate
+# Returns     : 0 if valid, 1 if invalid
+# -----------------------------------------------------------------------------
+validate_threshold() {
+    local value="$1"
+
+    # Check that it is a positive integer
+    if ! [[ "${value}" =~ ^[0-9]+$ ]]; then
+        echo -e "${RED}Error: Threshold must be a number between 1 and 100.${NC}"
+        return 1
+    fi
+
+    # Check the range
+    if [[ "${value}" -lt 1 || "${value}" -gt 100 ]]; then
+        echo -e "${RED}Error: Threshold must be between 1 and 100.${NC}"
+        return 1
+    fi
+
+    return 0
+}
+
+# -----------------------------------------------------------------------------
+# check_command()
+# Description : Checks if a required command is available on the system.
+# Parameters  : $1 — The command name to check
+# Returns     : 0 if available, 1 if missing
+# -----------------------------------------------------------------------------
+check_command() {
+    local cmd="$1"
+    if ! command -v "${cmd}" &>/dev/null; then
+        echo -e "${YELLOW}Warning: '${cmd}' command not found. Some features may be limited.${NC}"
+        return 1
+    fi
+    return 0
+}
+
+# -----------------------------------------------------------------------------
+# print_separator()
+# Description : Prints a visual separator line for readability.
+# Parameters  : None
+# Returns     : None
+# -----------------------------------------------------------------------------
+print_separator() {
+    echo -e "${CYAN}========================================================================${NC}"
+}
+
+# -----------------------------------------------------------------------------
+# press_enter()
+# Description : Pauses execution and waits for the user to press Enter.
