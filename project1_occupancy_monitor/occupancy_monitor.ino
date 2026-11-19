@@ -316,3 +316,30 @@ void printStatus(OccupancyInfo* pOcc, const char* event) {
     int available = pOcc->maxCapacity - pOcc->currentCount;
 
     Serial.print("[");
+    Serial.print(getTimestamp());
+    Serial.print("] ");
+    Serial.print(event);
+    Serial.print(F(" — Count: "));
+    Serial.print(pOcc->currentCount);
+    Serial.print(F("/"));
+    Serial.print(pOcc->maxCapacity);
+    Serial.print(F(" | Available: "));
+    Serial.print(available);
+    Serial.print(F(" | Total Entries: "));
+    Serial.print(pOcc->totalEntries);
+    Serial.print(F(" | Total Exits: "));
+    Serial.println(pOcc->totalExits);
+}
+
+/* ===========================================================================
+ * printError() — Print a formatted error message to the Serial Monitor.
+ *
+ * @param errorMsg  The error message string to display.
+ * =========================================================================== */
+void printError(const char* errorMsg) {
+    Serial.print("[");
+    Serial.print(getTimestamp());
+    Serial.print("] ERROR: ");
+    Serial.println(errorMsg);
+}
+
