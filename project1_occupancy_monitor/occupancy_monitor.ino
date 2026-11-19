@@ -140,3 +140,42 @@ void loop() {
     updateLEDs(pOccupancy);
 }
 
+/* ===========================================================================
+ * initSystem() — Initialise all peripherals and allocate occupancy struct.
+ *
+ * Configures pin modes, starts Serial and LCD, dynamically allocates the
+ * OccupancyInfo struct via malloc(), validates the allocation, and performs
+ * the first LCD + LED update.
+ * =========================================================================== */
+void initSystem(void) {
+    /* Configure button pins with internal pull-up resistors */
+    pinMode(ENTRY_BUTTON_PIN, INPUT_PULLUP);
+    pinMode(EXIT_BUTTON_PIN,  INPUT_PULLUP);
+
+    /* Configure LED pins as outputs */
+    pinMode(GREEN_LED_PIN, OUTPUT);
+    pinMode(RED_LED_PIN,   OUTPUT);
+
+    /* Start serial communication */
+    Serial.begin(SERIAL_BAUD_RATE);
+
+    /* Initialise the 16x2 LCD */
+    lcd.begin(16, 2);
+
+    /* --- Dynamically allocate the OccupancyInfo struct --- */
+    pOccupancy = (OccupancyInfo*)malloc(sizeof(OccupancyInfo));
+
+    /* Validate allocation */
+    if (pOccupancy == NULL) {
+        Serial.println(F("ERROR: malloc() failed — unable to allocate OccupancyInfo!"));
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("MEMORY ERROR!");
+        lcd.setCursor(0, 1);
+        lcd.print("System halted.");
+        /* Turn both LEDs on to signal fault */
+        digitalWrite(GREEN_LED_PIN, HIGH);
+        digitalWrite(RED_LED_PIN, HIGH);
+        return;  /* loop() will check for NULL and skip */
+    }
+
