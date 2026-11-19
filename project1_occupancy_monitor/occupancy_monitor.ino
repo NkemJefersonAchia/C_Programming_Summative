@@ -58,3 +58,25 @@ typedef struct {
 } OccupancyInfo;
 
 /* ---------------------------------------------------------------------------
+ * Global Variables
+ * --------------------------------------------------------------------------- */
+
+/* LCD object: RS, EN, D4, D5, D6, D7 */
+LiquidCrystal lcd(LCD_RS_PIN, LCD_EN_PIN, LCD_D4_PIN, LCD_D5_PIN,
+                   LCD_D6_PIN, LCD_D7_PIN);
+
+/* Pointer to dynamically allocated OccupancyInfo struct */
+OccupancyInfo* pOccupancy = NULL;
+
+/* Timing variables for non-blocking debounce (millis-based) */
+unsigned long lastEntryPressTime = 0;  /* Last valid entry button press time  */
+unsigned long lastExitPressTime  = 0;  /* Last valid exit button press time   */
+unsigned long lastLCDUpdateTime  = 0;  /* Last LCD refresh time               */
+
+/* Previous button states for edge detection */
+int prevEntryState = HIGH;  /* Previous reading of entry button (pull-up)    */
+int prevExitState  = HIGH;  /* Previous reading of exit button  (pull-up)    */
+
+/* ---------------------------------------------------------------------------
+ * Function Prototypes
+ * --------------------------------------------------------------------------- */
