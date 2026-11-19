@@ -256,3 +256,33 @@ void handleExit(OccupancyInfo* pOcc) {
         Serial.println();
     }
 }
+
+/* ===========================================================================
+ * updateLCD() — Refresh the 16x2 LCD with current occupancy data.
+ *
+ * @param pOcc  Pointer to the OccupancyInfo struct.
+ *
+ * Line 1: "People: X"       (current occupant count)
+ * Line 2: "Available: Y"    (remaining capacity)
+ * =========================================================================== */
+void updateLCD(OccupancyInfo* pOcc) {
+    int available = pOcc->maxCapacity - pOcc->currentCount;
+
+    /* Line 1: People count */
+    lcd.setCursor(0, 0);
+    lcd.print("People:    ");      /* Pad to clear previous digits */
+    lcd.setCursor(8, 0);
+    lcd.print(pOcc->currentCount);
+    lcd.print("   ");              /* Clear trailing characters */
+
+    /* Line 2: Available spots */
+    lcd.setCursor(0, 1);
+    lcd.print("Available: ");
+    lcd.setCursor(11, 1);
+    lcd.print(available);
+    lcd.print("   ");              /* Clear trailing characters */
+}
+
+/* ===========================================================================
+ * updateLEDs() — Set LED states based on current occupancy.
+ *
