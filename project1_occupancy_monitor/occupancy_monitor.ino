@@ -80,3 +80,19 @@ int prevExitState  = HIGH;  /* Previous reading of exit button  (pull-up)    */
 /* ---------------------------------------------------------------------------
  * Function Prototypes
  * --------------------------------------------------------------------------- */
+void initSystem(void);
+void handleEntry(OccupancyInfo* pOcc);
+void handleExit(OccupancyInfo* pOcc);
+void updateLCD(OccupancyInfo* pOcc);
+void updateLEDs(OccupancyInfo* pOcc);
+void printStatus(OccupancyInfo* pOcc, const char* event);
+void printError(const char* errorMsg);
+void cleanupSystem(void);
+String getTimestamp(void);
+
+/* ===========================================================================
+ * setup() — Arduino entry point. Initialises hardware and allocates memory.
+ * =========================================================================== */
+void setup() {
+    initSystem();
+}
