@@ -286,3 +286,33 @@ void updateLCD(OccupancyInfo* pOcc) {
 /* ===========================================================================
  * updateLEDs() — Set LED states based on current occupancy.
  *
+ * @param pOcc  Pointer to the OccupancyInfo struct.
+ *
+ * Green ON / Red OFF  → capacity available (currentCount < maxCapacity)
+ * Green OFF / Red ON  → at maximum capacity (currentCount == maxCapacity)
+ * =========================================================================== */
+void updateLEDs(OccupancyInfo* pOcc) {
+    if (pOcc->currentCount >= pOcc->maxCapacity) {
+        /* At full capacity */
+        digitalWrite(GREEN_LED_PIN, LOW);
+        digitalWrite(RED_LED_PIN,   HIGH);
+    } else {
+        /* Capacity available */
+        digitalWrite(GREEN_LED_PIN, HIGH);
+        digitalWrite(RED_LED_PIN,   LOW);
+    }
+}
+
+/* ===========================================================================
+ * printStatus() — Print a formatted event log entry to the Serial Monitor.
+ *
+ * @param pOcc   Pointer to the OccupancyInfo struct.
+ * @param event  String label for the event (e.g. "ENTRY" or "EXIT").
+ *
+ * Output format:
+ *   [timestamp] EVENT — Count: X/MAX | Available: Y | Entries: E | Exits: X
+ * =========================================================================== */
+void printStatus(OccupancyInfo* pOcc, const char* event) {
+    int available = pOcc->maxCapacity - pOcc->currentCount;
+
+    Serial.print("[");
