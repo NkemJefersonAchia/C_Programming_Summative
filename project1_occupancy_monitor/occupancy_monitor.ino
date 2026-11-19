@@ -343,3 +343,35 @@ void printError(const char* errorMsg) {
     Serial.println(errorMsg);
 }
 
+/* ===========================================================================
+ * getTimestamp() — Return a formatted timestamp string based on millis().
+ *
+ * @return  String in "HH:MM:SS" format representing elapsed time since boot.
+ *
+ * Since Arduino has no real-time clock, this uses millis() to compute
+ * hours, minutes, and seconds since the system started.
+ * =========================================================================== */
+String getTimestamp(void) {
+    unsigned long totalSeconds = millis() / 1000;
+    unsigned long hours   = totalSeconds / 3600;
+    unsigned long minutes = (totalSeconds % 3600) / 60;
+    unsigned long seconds = totalSeconds % 60;
+
+    char buffer[12];
+    sprintf(buffer, "%02lu:%02lu:%02lu", hours, minutes, seconds);
+    return String(buffer);
+}
+
+/* ===========================================================================
+ * cleanupSystem() — Free dynamically allocated memory.
+ *
+ * Called when the system needs to perform a graceful shutdown (not typical
+ * for Arduino, but included for completeness and good practice).
+ * =========================================================================== */
+void cleanupSystem(void) {
+    if (pOccupancy != NULL) {
+        free(pOccupancy);
+        pOccupancy = NULL;
+        Serial.println(F("System cleanup complete — memory freed."));
+    }
+}
