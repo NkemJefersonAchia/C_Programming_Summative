@@ -228,3 +228,31 @@ void handleEntry(OccupancyInfo* pOcc) {
         Serial.println();
     }
 }
+
+/* ===========================================================================
+ * handleExit() — Process an exit event.
+ *
+ * @param pOcc  Pointer to the OccupancyInfo struct.
+ *
+ * If currentCount > 0, decrements currentCount and increments totalExits,
+ * then prints updated status to Serial. Otherwise, prints an error message
+ * indicating the room is already empty.
+ * =========================================================================== */
+void handleExit(OccupancyInfo* pOcc) {
+    if (pOcc->currentCount > 0) {
+        pOcc->currentCount--;
+        pOcc->totalExits++;
+        printStatus(pOcc, "EXIT");
+    } else {
+        /* Room is empty — reject exit */
+        Serial.print("[");
+        Serial.print(getTimestamp());
+        Serial.print("] ");
+        Serial.println(F("ERROR: Exit REJECTED — room is already EMPTY!"));
+        Serial.print(F("       Current count: "));
+        Serial.print(pOcc->currentCount);
+        Serial.print(F("/"));
+        Serial.println(pOcc->maxCapacity);
+        Serial.println();
+    }
+}
