@@ -200,3 +200,31 @@ void initSystem(void) {
     updateLCD(pOccupancy);
     updateLEDs(pOccupancy);
 }
+
+/* ===========================================================================
+ * handleEntry() — Process an entry event.
+ *
+ * @param pOcc  Pointer to the OccupancyInfo struct.
+ *
+ * If currentCount < maxCapacity, increments currentCount and totalEntries,
+ * then prints updated status to Serial. Otherwise, prints an error message
+ * indicating the room is at full capacity.
+ * =========================================================================== */
+void handleEntry(OccupancyInfo* pOcc) {
+    if (pOcc->currentCount < pOcc->maxCapacity) {
+        pOcc->currentCount++;
+        pOcc->totalEntries++;
+        printStatus(pOcc, "ENTRY");
+    } else {
+        /* Room is full — reject entry */
+        Serial.print("[");
+        Serial.print(getTimestamp());
+        Serial.print("] ");
+        Serial.println(F("ERROR: Entry REJECTED — room is at MAXIMUM CAPACITY!"));
+        Serial.print(F("       Current count: "));
+        Serial.print(pOcc->currentCount);
+        Serial.print(F("/"));
+        Serial.println(pOcc->maxCapacity);
+        Serial.println();
+    }
+}
