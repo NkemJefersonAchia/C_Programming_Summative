@@ -179,3 +179,24 @@ void initSystem(void) {
         return;  /* loop() will check for NULL and skip */
     }
 
+    /* Initialise struct fields via pointer */
+    pOccupancy->currentCount  = 0;
+    pOccupancy->maxCapacity   = MAX_CAPACITY;
+    pOccupancy->totalEntries  = 0;
+    pOccupancy->totalExits    = 0;
+
+    /* Print startup banner to Serial Monitor */
+    Serial.println(F("============================================================"));
+    Serial.println(F("  Smart Occupancy Monitoring and Access Control System"));
+    Serial.println(F("============================================================"));
+    Serial.print(F("  Max Capacity : "));
+    Serial.println(MAX_CAPACITY);
+    Serial.print(F("  System Start : "));
+    Serial.println(getTimestamp());
+    Serial.println(F("============================================================"));
+    Serial.println();
+
+    /* Initial display update */
+    updateLCD(pOccupancy);
+    updateLEDs(pOccupancy);
+}
