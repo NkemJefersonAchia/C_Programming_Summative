@@ -203,3 +203,68 @@ monitor_cpu() {
         else
             # macOS fallback
             echo "  (Using macOS-compatible mode)"
+            top -l 1 -n 0 2>/dev/null | grep -i "cpu usage" | head -1
+        fi
+        echo ""
+    elif check_command mpstat; then
+        echo -e "${GREEN}CPU Usage (via mpstat):${NC}"
+        mpstat 2>/dev/null
+        echo ""
+    else
+        echo -e "${RED}Error: Neither 'top' nor 'mpstat' is available.${NC}"
+    fi
+
+    # --- Top CPU-consuming processes ---
+    echo -e "${GREEN}Top 10 CPU-Consuming Processes:${NC}"
+    echo -e "${BOLD}  PID     CPU%   MEM%   COMMAND${NC}"
+    if check_command ps; then
+        ps aux --sort=-%cpu 2>/dev/null | head -11 | tail -10 | \
+            awk '{printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, $11}' 2>/dev/null
+        # Fallback for macOS (ps aux --sort may not work)
+        if [[ $? -ne 0 ]]; then
+            ps aux 2>/dev/null | sort -nrk 3 | head -10 | \
+                awk '{printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, $11}'
+        fi
+    fi
+    echo ""
+
+    # --- Allow user to set CPU threshold ---
+    echo -e "${YELLOW}Current CPU warning threshold: ${CPU_THRESHOLD}%${NC}"
+    read -rp "Set new CPU threshold (1-100) or press Enter to keep current: " new_threshold
+
+    if [[ -n "${new_threshold}" ]]; then
+        if validate_threshold "${new_threshold}"; then
+            CPU_THRESHOLD="${new_threshold}"
+            echo -e "${GREEN}CPU threshold updated to ${CPU_THRESHOLD}%.${NC}"
+            log_activity "CPU threshold set to ${CPU_THRESHOLD}%"
+        fi
+    fi
+
+    log_activity "Monitored CPU utilization"
+    press_enter
+}
+
+# -----------------------------------------------------------------------------
+# monitor_memory()
+# Description : Monitors memory utilization, shows total/used/available memory,
+#               calculates usage percentage, and warns if above threshold.
+# Parameters  : None
+# Returns     : None
+# -----------------------------------------------------------------------------
+monitor_memory() {
+    print_separator
+    echo -e "${BOLD}${BLUE}        MEMORY UTILIZATION MONITOR${NC}"
+    print_separator
+
+    # --- Display memory info ---
+    if check_command free; then
+        echo -e "${GREEN}Memory Information:${NC}"
+        free -h 2>/dev/null
+        echo ""
+
+        # Calculate memory usage percentage
+        local mem_info
+        mem_info=$(free 2>/dev/null | grep -i "mem:")
+        if [[ -n "${mem_info}" ]]; then
+            local total used available
+            total=$(echo "${mem_info}" | awk '{print $2}')
