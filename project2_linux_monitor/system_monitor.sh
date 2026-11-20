@@ -503,3 +503,73 @@ terminate_process() {
     # --- Validate PID input ---
     if [[ -z "${target_pid}" ]]; then
         echo -e "${RED}Error: PID cannot be empty.${NC}"
+        press_enter
+        return
+    fi
+
+    if ! [[ "${target_pid}" =~ ^[0-9]+$ ]]; then
+        echo -e "${RED}Error: PID must be a positive number.${NC}"
+        press_enter
+        return
+    fi
+
+    # --- Protect system-critical processes ---
+    if [[ "${target_pid}" -lt 100 ]]; then
+        echo -e "${RED}Error: Cannot terminate system-critical process (PID < 100).${NC}"
+        echo -e "${RED}PIDs below 100 are reserved for essential system processes.${NC}"
+        log_activity "Blocked attempt to kill system process PID ${target_pid}"
+        press_enter
+        return
+    fi
+
+    # --- Check if the process exists ---
+    if ! ps -p "${target_pid}" &>/dev/null; then
+        echo -e "${RED}Error: No process found with PID ${target_pid}.${NC}"
+        press_enter
+        return
+    fi
+
+    # --- Show process details before killing ---
+    echo -e "${GREEN}Process details:${NC}"
+    ps -p "${target_pid}" -o pid,user,%cpu,%mem,comm 2>/dev/null
+    echo ""
+
+    # --- Confirm with the user ---
+    read -rp "Are you sure you want to terminate PID ${target_pid}? (y/n): " confirm
+    if [[ "${confirm}" != "y" && "${confirm}" != "Y" ]]; then
+        echo -e "${YELLOW}Process termination cancelled.${NC}"
+        log_activity "Cancelled termination of PID ${target_pid}"
+        press_enter
+        return
+    fi
+
+    # --- Attempt to kill the process ---
+    if kill "${target_pid}" 2>/dev/null; then
+        echo -e "${GREEN}✓ Process ${target_pid} has been terminated successfully.${NC}"
+        log_activity "Terminated process PID ${target_pid}"
+    else
+        echo -e "${RED}Error: Failed to terminate PID ${target_pid}.${NC}"
+        echo -e "${YELLOW}You may not have sufficient permissions. Try running with sudo.${NC}"
+        log_activity "Failed to terminate PID ${target_pid} — permission denied"
+    fi
+
+    press_enter
+}
+
+# -----------------------------------------------------------------------------
+# generate_report()
+# Description : Generates a comprehensive system health report containing
+#               CPU, memory, disk, and uptime information. Saves to a
+#               user-specified directory with a timestamp in the filename.
+# Parameters  : None
+# Returns     : None
+# -----------------------------------------------------------------------------
+generate_report() {
+    print_separator
+    echo -e "${BOLD}${BLUE}        GENERATE SYSTEM HEALTH REPORT${NC}"
+    print_separator
+
+    # --- Ask user for the output directory ---
+    read -rp "Enter directory to save the report (or press Enter for current directory): " report_dir
+
+    # Default to current directory if empty
