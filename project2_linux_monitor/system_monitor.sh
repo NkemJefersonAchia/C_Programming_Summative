@@ -313,3 +313,68 @@ monitor_memory() {
     fi
     echo ""
 
+    # --- Allow user to set memory threshold ---
+    echo -e "${YELLOW}Current memory warning threshold: ${MEMORY_THRESHOLD}%${NC}"
+    read -rp "Set new memory threshold (1-100) or press Enter to keep current: " new_threshold
+
+    if [[ -n "${new_threshold}" ]]; then
+        if validate_threshold "${new_threshold}"; then
+            MEMORY_THRESHOLD="${new_threshold}"
+            echo -e "${GREEN}Memory threshold updated to ${MEMORY_THRESHOLD}%.${NC}"
+            log_activity "Memory threshold set to ${MEMORY_THRESHOLD}%"
+        fi
+    fi
+
+    log_activity "Monitored memory utilization"
+    press_enter
+}
+
+# -----------------------------------------------------------------------------
+# monitor_disk()
+# Description : Monitors disk utilization, shows filesystem usage, identifies
+#               filesystems near capacity, and allows threshold configuration.
+# Parameters  : None
+# Returns     : None
+# -----------------------------------------------------------------------------
+monitor_disk() {
+    print_separator
+    echo -e "${BOLD}${BLUE}        DISK UTILIZATION MONITOR${NC}"
+    print_separator
+
+    # --- Display disk space ---
+    if check_command df; then
+        echo -e "${GREEN}Disk Space Usage:${NC}"
+        df -h 2>/dev/null
+        echo ""
+
+        # --- Identify filesystems near or above threshold ---
+        echo -e "${GREEN}Filesystems at or above ${DISK_THRESHOLD}% capacity:${NC}"
+        local found_warning=false
+
+        # Parse df output, skip header line
+        while IFS= read -r line; do
+            # Extract the usage percentage (remove the % sign)
+            local usage_pct
+            usage_pct=$(echo "${line}" | awk '{print $5}' | tr -d '%')
+
+            # Validate it is a number
+            if [[ "${usage_pct}" =~ ^[0-9]+$ ]]; then
+                if [[ "${usage_pct}" -ge "${DISK_THRESHOLD}" ]]; then
+                    local filesystem mountpoint
+                    filesystem=$(echo "${line}" | awk '{print $1}')
+                    mountpoint=$(echo "${line}" | awk '{print $6}')
+                    echo -e "  ${RED}⚠  ${filesystem} mounted on ${mountpoint} — ${usage_pct}% used${NC}"
+                    found_warning=true
+                fi
+            fi
+        done < <(df -h 2>/dev/null | tail -n +2)
+
+        if [[ "${found_warning}" == false ]]; then
+            echo -e "  ${GREEN}✓ All filesystems are below the ${DISK_THRESHOLD}% threshold.${NC}"
+        fi
+    else
+        echo -e "${RED}Error: 'df' command not found.${NC}"
+    fi
+    echo ""
+
+    # --- Allow user to set disk threshold ---
