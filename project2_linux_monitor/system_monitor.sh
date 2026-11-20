@@ -148,3 +148,58 @@ display_system_info() {
         echo -e "${GREEN}System Uptime  :${NC} N/A (uptime command not found)"
     fi
 
+    # Current Date and Time
+    echo -e "${GREEN}Date/Time      :${NC} $(date '+%Y-%m-%d %H:%M:%S %Z' 2>/dev/null || echo 'N/A')"
+
+    print_separator
+
+    log_activity "Viewed system information"
+    press_enter
+}
+
+# -----------------------------------------------------------------------------
+# monitor_cpu()
+# Description : Monitors CPU utilization, displays top CPU-consuming processes,
+#               and allows the user to set a CPU usage warning threshold.
+# Parameters  : None
+# Returns     : None
+# -----------------------------------------------------------------------------
+monitor_cpu() {
+    print_separator
+    echo -e "${BOLD}${BLUE}        CPU UTILIZATION MONITOR${NC}"
+    print_separator
+
+    # --- Gather CPU usage ---
+    # Try 'top' first (batch mode, single iteration)
+    if check_command top; then
+        echo -e "${GREEN}CPU Usage Summary:${NC}"
+
+        # On Linux, top -bn1 works; on macOS, top works differently
+        if [[ "$(uname)" == "Linux" ]]; then
+            # Extract the CPU line from top
+            local cpu_line
+            cpu_line=$(top -bn1 2>/dev/null | grep -i "cpu(s)" | head -1)
+            if [[ -n "${cpu_line}" ]]; then
+                echo "  ${cpu_line}"
+                # Calculate usage: 100 - idle
+                local idle
+                idle=$(echo "${cpu_line}" | grep -oP '[\d.]+(?=\s*id)' 2>/dev/null)
+                if [[ -n "${idle}" ]]; then
+                    local usage
+                    usage=$(echo "100 - ${idle}" | bc 2>/dev/null)
+                    if [[ -n "${usage}" ]]; then
+                        echo -e "  ${GREEN}Overall CPU Usage:${NC} ${usage}%"
+                        # Check against threshold
+                        local usage_int
+                        usage_int=$(printf "%.0f" "${usage}" 2>/dev/null)
+                        if [[ -n "${usage_int}" && "${usage_int}" -ge "${CPU_THRESHOLD}" ]]; then
+                            echo -e "  ${RED}⚠  WARNING: CPU usage (${usage}%) exceeds threshold (${CPU_THRESHOLD}%)!${NC}"
+                        fi
+                    fi
+                fi
+            else
+                echo "  Could not parse CPU information from top."
+            fi
+        else
+            # macOS fallback
+            echo "  (Using macOS-compatible mode)"
