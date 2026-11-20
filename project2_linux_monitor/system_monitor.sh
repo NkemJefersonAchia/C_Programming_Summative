@@ -378,3 +378,63 @@ monitor_disk() {
     echo ""
 
     # --- Allow user to set disk threshold ---
+    echo -e "${YELLOW}Current disk usage warning threshold: ${DISK_THRESHOLD}%${NC}"
+    read -rp "Set new disk threshold (1-100) or press Enter to keep current: " new_threshold
+
+    if [[ -n "${new_threshold}" ]]; then
+        if validate_threshold "${new_threshold}"; then
+            DISK_THRESHOLD="${new_threshold}"
+            echo -e "${GREEN}Disk threshold updated to ${DISK_THRESHOLD}%.${NC}"
+            log_activity "Disk threshold set to ${DISK_THRESHOLD}%"
+        fi
+    fi
+
+    log_activity "Monitored disk utilization"
+    press_enter
+}
+
+# -----------------------------------------------------------------------------
+# search_processes()
+# Description : Lists running processes and allows user to search by name
+#               or PID. Displays PID, CPU%, MEM%, and command information.
+# Parameters  : None
+# Returns     : None
+# -----------------------------------------------------------------------------
+search_processes() {
+    print_separator
+    echo -e "${BOLD}${BLUE}        VIEW AND SEARCH RUNNING PROCESSES${NC}"
+    print_separator
+
+    if ! check_command ps; then
+        echo -e "${RED}Error: 'ps' command not found.${NC}"
+        log_activity "Attempted to view processes — ps command not found"
+        press_enter
+        return
+    fi
+
+    echo "Options:"
+    echo "  1) List all running processes"
+    echo "  2) Search by process name"
+    echo "  3) Search by PID"
+    echo ""
+    read -rp "Select an option (1-3): " search_option
+
+    case "${search_option}" in
+        1)
+            echo ""
+            echo -e "${GREEN}All Running Processes (sorted by CPU usage):${NC}"
+            echo -e "${BOLD}  PID      CPU%   MEM%   COMMAND${NC}"
+            ps aux --sort=-%cpu 2>/dev/null | tail -n +2 | \
+                awk '{printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, $11}' 2>/dev/null
+            # Fallback if --sort is not supported
+            if [[ $? -ne 0 ]]; then
+                ps aux 2>/dev/null | tail -n +2 | sort -nrk 3 | \
+                    awk '{printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, $11}'
+            fi
+            log_activity "Listed all running processes"
+            ;;
+        2)
+            read -rp "Enter process name to search: " proc_name
+            if [[ -z "${proc_name}" ]]; then
+                echo -e "${RED}Error: Process name cannot be empty.${NC}"
+            else
