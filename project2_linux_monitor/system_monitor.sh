@@ -648,3 +648,63 @@ generate_report() {
 
         echo "--- DISK INFORMATION ---"
         df -h 2>/dev/null || echo "Disk info not available"
+        echo ""
+
+        echo "--- ACTIVE PROCESSES COUNT ---"
+        echo "Total processes: $(ps aux 2>/dev/null | wc -l | tr -d ' ')"
+        echo ""
+
+        echo "================================================================================"
+        echo "                     END OF REPORT"
+        echo "================================================================================"
+    } > "${report_file}" 2>/dev/null
+
+    if [[ $? -eq 0 ]]; then
+        echo -e "${GREEN}✓ Report saved to: ${report_file}${NC}"
+        log_activity "Generated system health report: ${report_file}"
+    else
+        echo -e "${RED}Error: Failed to write report to '${report_file}'.${NC}"
+        log_activity "Failed to generate report at: ${report_file}"
+    fi
+
+    press_enter
+}
+
+# -----------------------------------------------------------------------------
+# view_activity_log()
+# Description : Displays the contents of the activity log file. If the log
+#               does not exist or is empty, informs the user.
+# Parameters  : None
+# Returns     : None
+# -----------------------------------------------------------------------------
+view_activity_log() {
+    print_separator
+    echo -e "${BOLD}${BLUE}        ACTIVITY HISTORY${NC}"
+    print_separator
+
+    if [[ ! -f "${LOG_FILE}" ]]; then
+        echo -e "${YELLOW}No activity log found. No actions have been recorded yet.${NC}"
+    elif [[ ! -s "${LOG_FILE}" ]]; then
+        echo -e "${YELLOW}Activity log is empty.${NC}"
+    else
+        echo -e "${GREEN}Activity Log (${LOG_FILE}):${NC}"
+        echo ""
+        cat "${LOG_FILE}"
+    fi
+
+    press_enter
+}
+
+# -----------------------------------------------------------------------------
+# clear_activity_log()
+# Description : Clears the activity log file after user confirmation.
+# Parameters  : None
+# Returns     : None
+# -----------------------------------------------------------------------------
+clear_activity_log() {
+    print_separator
+    echo -e "${BOLD}${BLUE}        CLEAR ACTIVITY LOG${NC}"
+    print_separator
+
+    if [[ ! -f "${LOG_FILE}" ]]; then
+        echo -e "${YELLOW}No activity log file exists. Nothing to clear.${NC}"
