@@ -438,3 +438,68 @@ search_processes() {
             if [[ -z "${proc_name}" ]]; then
                 echo -e "${RED}Error: Process name cannot be empty.${NC}"
             else
+                echo ""
+                echo -e "${GREEN}Processes matching '${proc_name}':${NC}"
+                echo -e "${BOLD}  PID      CPU%   MEM%   COMMAND${NC}"
+                local results
+                results=$(ps aux 2>/dev/null | grep -i "${proc_name}" | grep -v "grep" | \
+                    awk '{printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, $11}')
+                if [[ -z "${results}" ]]; then
+                    echo -e "  ${YELLOW}No processes found matching '${proc_name}'.${NC}"
+                else
+                    echo "${results}"
+                fi
+                log_activity "Searched processes by name: '${proc_name}'"
+            fi
+            ;;
+        3)
+            read -rp "Enter PID to search: " search_pid
+            if ! [[ "${search_pid}" =~ ^[0-9]+$ ]]; then
+                echo -e "${RED}Error: PID must be a positive number.${NC}"
+            else
+                echo ""
+                echo -e "${GREEN}Process with PID ${search_pid}:${NC}"
+                echo -e "${BOLD}  PID      CPU%   MEM%   COMMAND${NC}"
+                local result
+                result=$(ps aux 2>/dev/null | awk -v pid="${search_pid}" '$2 == pid {printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, $11}')
+                if [[ -z "${result}" ]]; then
+                    echo -e "  ${YELLOW}No process found with PID ${search_pid}.${NC}"
+                else
+                    echo "${result}"
+                fi
+                log_activity "Searched process by PID: ${search_pid}"
+            fi
+            ;;
+        *)
+            echo -e "${RED}Invalid option. Please select 1, 2, or 3.${NC}"
+            ;;
+    esac
+
+    press_enter
+}
+
+# -----------------------------------------------------------------------------
+# terminate_process()
+# Description : Terminates a process by PID after user confirmation. Protects
+#               system-critical processes (PID < 100) and handles permission
+#               errors gracefully.
+# Parameters  : None
+# Returns     : None
+# -----------------------------------------------------------------------------
+terminate_process() {
+    print_separator
+    echo -e "${BOLD}${BLUE}        TERMINATE A PROCESS${NC}"
+    print_separator
+
+    if ! check_command kill; then
+        echo -e "${RED}Error: 'kill' command not found.${NC}"
+        log_activity "Attempted to terminate process — kill command not found"
+        press_enter
+        return
+    fi
+
+    read -rp "Enter the PID of the process to terminate: " target_pid
+
+    # --- Validate PID input ---
+    if [[ -z "${target_pid}" ]]; then
+        echo -e "${RED}Error: PID cannot be empty.${NC}"
