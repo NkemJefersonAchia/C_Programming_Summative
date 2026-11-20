@@ -768,3 +768,75 @@ show_menu() {
     echo -e "  ${GREEN}8)${NC} View Activity History"
     echo -e "  ${GREEN}9)${NC} Clear Activity Log"
     echo -e "  ${RED}0)${NC} Exit"
+    echo ""
+    print_separator
+    echo ""
+}
+
+# =============================================================================
+# MAIN FUNCTION
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# main()
+# Description : Entry point of the script. Runs the main menu loop, reads user
+#               input, validates it, and dispatches to the appropriate function.
+# Parameters  : None
+# Returns     : None
+# -----------------------------------------------------------------------------
+main() {
+    # Log script startup
+    log_activity "System Monitor started"
+
+    # Main menu loop
+    while true; do
+        show_menu
+        read -rp "  Enter your choice [0-9]: " choice
+
+        case "${choice}" in
+            1)
+                display_system_info
+                ;;
+            2)
+                monitor_cpu
+                ;;
+            3)
+                monitor_memory
+                ;;
+            4)
+                monitor_disk
+                ;;
+            5)
+                search_processes
+                ;;
+            6)
+                terminate_process
+                ;;
+            7)
+                generate_report
+                ;;
+            8)
+                view_activity_log
+                ;;
+            9)
+                clear_activity_log
+                ;;
+            0)
+                log_activity "System Monitor exited"
+                echo ""
+                echo -e "${GREEN}Thank you for using the System Monitor. Goodbye!${NC}"
+                echo ""
+                exit 0
+                ;;
+            *)
+                echo -e "${RED}Invalid choice '${choice}'. Please enter a number between 0 and 9.${NC}"
+                press_enter
+                ;;
+        esac
+    done
+}
+
+# =============================================================================
+# SCRIPT EXECUTION — call main()
+# =============================================================================
+main
