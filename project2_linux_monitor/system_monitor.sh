@@ -708,3 +708,63 @@ clear_activity_log() {
 
     if [[ ! -f "${LOG_FILE}" ]]; then
         echo -e "${YELLOW}No activity log file exists. Nothing to clear.${NC}"
+        press_enter
+        return
+    fi
+
+    if [[ ! -s "${LOG_FILE}" ]]; then
+        echo -e "${YELLOW}Activity log is already empty.${NC}"
+        press_enter
+        return
+    fi
+
+    # Show current log size
+    local line_count
+    line_count=$(wc -l < "${LOG_FILE}" | tr -d ' ')
+    echo -e "${YELLOW}The activity log contains ${line_count} entries.${NC}"
+    echo ""
+
+    # Confirm before clearing
+    read -rp "Are you sure you want to clear the activity log? (y/n): " confirm
+    if [[ "${confirm}" == "y" || "${confirm}" == "Y" ]]; then
+        > "${LOG_FILE}" 2>/dev/null
+        if [[ $? -eq 0 ]]; then
+            echo -e "${GREEN}✓ Activity log has been cleared.${NC}"
+            log_activity "Activity log was cleared"
+        else
+            echo -e "${RED}Error: Could not clear the activity log.${NC}"
+        fi
+    else
+        echo -e "${YELLOW}Clear operation cancelled.${NC}"
+    fi
+
+    press_enter
+}
+
+# =============================================================================
+# MENU FUNCTIONS
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# show_menu()
+# Description : Displays the interactive main menu with all available options.
+# Parameters  : None
+# Returns     : None
+# -----------------------------------------------------------------------------
+show_menu() {
+    clear
+    echo ""
+    print_separator
+    echo -e "${BOLD}${CYAN}   Linux System Health and Resource Monitoring Manager${NC}"
+    print_separator
+    echo ""
+    echo -e "  ${GREEN}1)${NC} Display System Information"
+    echo -e "  ${GREEN}2)${NC} Monitor CPU Utilization"
+    echo -e "  ${GREEN}3)${NC} Monitor Memory Utilization"
+    echo -e "  ${GREEN}4)${NC} Monitor Disk Utilization"
+    echo -e "  ${GREEN}5)${NC} View and Search Running Processes"
+    echo -e "  ${GREEN}6)${NC} Terminate a Process"
+    echo -e "  ${GREEN}7)${NC} Generate System Health Report"
+    echo -e "  ${GREEN}8)${NC} View Activity History"
+    echo -e "  ${GREEN}9)${NC} Clear Activity Log"
+    echo -e "  ${RED}0)${NC} Exit"
