@@ -268,3 +268,48 @@ monitor_memory() {
         if [[ -n "${mem_info}" ]]; then
             local total used available
             total=$(echo "${mem_info}" | awk '{print $2}')
+            used=$(echo "${mem_info}" | awk '{print $3}')
+            available=$(echo "${mem_info}" | awk '{print $7}')
+
+            if [[ "${total}" -gt 0 ]] 2>/dev/null; then
+                local usage_pct
+                usage_pct=$(( (used * 100) / total ))
+                echo -e "${GREEN}Memory Usage:${NC} ${usage_pct}% used"
+                echo -e "${GREEN}Total:${NC} $(free -h | grep -i mem | awk '{print $2}')  |  " \
+                     "${GREEN}Used:${NC} $(free -h | grep -i mem | awk '{print $3}')  |  " \
+                     "${GREEN}Available:${NC} $(free -h | grep -i mem | awk '{print $7}')"
+                echo ""
+
+                # Check against threshold
+                if [[ "${usage_pct}" -ge "${MEMORY_THRESHOLD}" ]]; then
+                    echo -e "${RED}⚠  WARNING: Memory usage (${usage_pct}%) exceeds threshold (${MEMORY_THRESHOLD}%)!${NC}"
+                fi
+            fi
+        fi
+    else
+        # Fallback: try /proc/meminfo (Linux-specific)
+        if [[ -f /proc/meminfo ]]; then
+            echo -e "${GREEN}Memory Information (from /proc/meminfo):${NC}"
+            local total_kb free_kb available_kb
+            total_kb=$(grep -i "MemTotal" /proc/meminfo | awk '{print $2}')
+            free_kb=$(grep -i "MemFree" /proc/meminfo | awk '{print $2}')
+            available_kb=$(grep -i "MemAvailable" /proc/meminfo | awk '{print $2}')
+
+            echo "  Total:     $((total_kb / 1024)) MB"
+            echo "  Free:      $((free_kb / 1024)) MB"
+            echo "  Available: $((available_kb / 1024)) MB"
+
+            if [[ "${total_kb}" -gt 0 ]] 2>/dev/null; then
+                local used_kb=$((total_kb - available_kb))
+                local usage_pct=$(( (used_kb * 100) / total_kb ))
+                echo -e "  ${GREEN}Usage:${NC} ${usage_pct}%"
+                if [[ "${usage_pct}" -ge "${MEMORY_THRESHOLD}" ]]; then
+                    echo -e "  ${RED}⚠  WARNING: Memory usage (${usage_pct}%) exceeds threshold (${MEMORY_THRESHOLD}%)!${NC}"
+                fi
+            fi
+        else
+            echo -e "${RED}Error: 'free' command not available and /proc/meminfo not found.${NC}"
+        fi
+    fi
+    echo ""
+
