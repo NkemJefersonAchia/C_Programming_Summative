@@ -128,3 +128,73 @@ void displayStudentFull(Student *student) {
         for (i = 0; i < 78; i++) printf("-");
         printf("\n");
 
+        for (i = 0; i < student->numCourses; i++) {
+            CourseRecord *c = student->courses + i;
+            float pct = (c->maxMarks > 0) ? (c->marksObtained / c->maxMarks) * 100.0f : 0.0f;
+            printf("  %-15s %-30s %10.2f %10.2f %7.2f%%\n",
+                   c->courseCode, c->courseName,
+                   c->marksObtained, c->maxMarks, pct);
+        }
+    }
+
+    avg = calculateStudentAverage(student);
+    printf("\n  Overall Average: %.2f%%\n", avg);
+    printf("  Status         : %s\n", (avg >= PASS_THRESHOLD) ? "PASSING" : "FAILING");
+    printf("-----------------------\n");
+}
+
+/*
+ * freeAllMemory
+ * -------------
+ * Frees all dynamically allocated memory: each student's courses array,
+ * then the students array itself.
+ */
+void freeAllMemory(Student *students, int numStudents) {
+    int i;
+    if (students == NULL) return;
+
+    for (i = 0; i < numStudents; i++) {
+        if ((students + i)->courses != NULL) {
+            free((students + i)->courses);
+            (students + i)->courses = NULL;
+        }
+    }
+    free(students);
+}
+
+/* ============================================================================
+ *                            MENU AND UI
+ * ============================================================================ */
+
+/*
+ * displayMenu
+ * -----------
+ * Displays the main menu options to the user.
+ */
+void displayMenu(void) {
+    printf("\n===== STUDENT ACADEMIC RECORDS SYSTEM =====\n");
+    printf("1.  Register New Student\n");
+    printf("2.  Display All Students\n");
+    printf("3.  View Student Details\n");
+    printf("4.  Update Student Information\n");
+    printf("5.  Delete Student Record\n");
+    printf("6.  Add Course to Student\n");
+    printf("7.  Update Course Marks\n");
+    printf("8.  Display Academic Performance\n");
+    printf("9.  Search Students\n");
+    printf("10. Sort Students\n");
+    printf("11. Generate Academic Report\n");
+    printf("12. Save Records to File\n");
+    printf("13. Load Records from File\n");
+    printf("0.  Exit\n");
+    printf("============================================\n");
+    printf("Enter your choice: ");
+}
+
+/* ============================================================================
+ *                       STUDENT CRUD OPERATIONS
+ * ============================================================================ */
+
+/*
+ * registerStudent
+ * ---------------
