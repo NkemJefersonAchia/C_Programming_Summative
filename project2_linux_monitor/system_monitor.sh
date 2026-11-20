@@ -108,3 +108,43 @@ print_separator() {
 # -----------------------------------------------------------------------------
 # press_enter()
 # Description : Pauses execution and waits for the user to press Enter.
+# Parameters  : None
+# Returns     : None
+# -----------------------------------------------------------------------------
+press_enter() {
+    echo ""
+    read -rp "Press [Enter] to return to the menu..."
+}
+
+# =============================================================================
+# CORE MONITORING FUNCTIONS
+# =============================================================================
+
+# -----------------------------------------------------------------------------
+# display_system_info()
+# Description : Displays general system information including hostname, OS,
+#               kernel version, uptime, and current date/time.
+# Parameters  : None
+# Returns     : None
+# -----------------------------------------------------------------------------
+display_system_info() {
+    print_separator
+    echo -e "${BOLD}${BLUE}        SYSTEM INFORMATION${NC}"
+    print_separator
+
+    # Hostname
+    echo -e "${GREEN}Hostname       :${NC} $(hostname 2>/dev/null || echo 'N/A')"
+
+    # OS Information (full uname output)
+    echo -e "${GREEN}OS Information :${NC} $(uname -a 2>/dev/null || echo 'N/A')"
+
+    # Kernel Version
+    echo -e "${GREEN}Kernel Version :${NC} $(uname -r 2>/dev/null || echo 'N/A')"
+
+    # System Uptime
+    if check_command uptime; then
+        echo -e "${GREEN}System Uptime  :${NC} $(uptime 2>/dev/null || echo 'N/A')"
+    else
+        echo -e "${GREEN}System Uptime  :${NC} N/A (uptime command not found)"
+    fi
+
