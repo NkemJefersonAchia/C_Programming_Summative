@@ -573,3 +573,78 @@ generate_report() {
     read -rp "Enter directory to save the report (or press Enter for current directory): " report_dir
 
     # Default to current directory if empty
+    if [[ -z "${report_dir}" ]]; then
+        report_dir="."
+    fi
+
+    # --- Validate directory ---
+    if [[ ! -d "${report_dir}" ]]; then
+        echo -e "${YELLOW}Directory '${report_dir}' does not exist. Create it? (y/n): ${NC}"
+        read -r create_dir
+        if [[ "${create_dir}" == "y" || "${create_dir}" == "Y" ]]; then
+            mkdir -p "${report_dir}" 2>/dev/null
+            if [[ $? -ne 0 ]]; then
+                echo -e "${RED}Error: Could not create directory '${report_dir}'.${NC}"
+                log_activity "Failed to create report directory: ${report_dir}"
+                press_enter
+                return
+            fi
+        else
+            echo -e "${RED}Report generation cancelled.${NC}"
+            press_enter
+            return
+        fi
+    fi
+
+    # Check write permission
+    if [[ ! -w "${report_dir}" ]]; then
+        echo -e "${RED}Error: No write permission to directory '${report_dir}'.${NC}"
+        log_activity "Report generation failed — no write permission to ${report_dir}"
+        press_enter
+        return
+    fi
+
+    # --- Generate the report ---
+    local timestamp
+    timestamp="$(date '+%Y%m%d_%H%M%S')"
+    local report_file="${report_dir}/system_health_report_${timestamp}.txt"
+
+    echo -e "${GREEN}Generating system health report...${NC}"
+
+    {
+        echo "================================================================================"
+        echo "                     SYSTEM HEALTH REPORT"
+        echo "================================================================================"
+        echo "Generated on : $(date '+%Y-%m-%d %H:%M:%S %Z')"
+        echo "Hostname     : $(hostname 2>/dev/null || echo 'N/A')"
+        echo ""
+
+        echo "--- SYSTEM INFORMATION ---"
+        echo "OS Info      : $(uname -a 2>/dev/null || echo 'N/A')"
+        echo "Kernel       : $(uname -r 2>/dev/null || echo 'N/A')"
+        echo "Uptime       : $(uptime 2>/dev/null || echo 'N/A')"
+        echo ""
+
+        echo "--- CPU INFORMATION ---"
+        if [[ "$(uname)" == "Linux" ]]; then
+            top -bn1 2>/dev/null | head -5
+        else
+            top -l 1 -n 0 2>/dev/null | head -10
+        fi
+        echo ""
+        echo "Top 10 CPU Processes:"
+        ps aux --sort=-%cpu 2>/dev/null | head -11 || ps aux 2>/dev/null | sort -nrk 3 | head -11
+        echo ""
+
+        echo "--- MEMORY INFORMATION ---"
+        if check_command free; then
+            free -h 2>/dev/null
+        elif [[ -f /proc/meminfo ]]; then
+            head -5 /proc/meminfo
+        else
+            echo "Memory info not available"
+        fi
+        echo ""
+
+        echo "--- DISK INFORMATION ---"
+        df -h 2>/dev/null || echo "Disk info not available"
