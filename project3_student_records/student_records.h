@@ -33,3 +33,16 @@
 /* ========================== STRUCTURES ========================== */
 
 /*
+ * CourseRecord
+ * -----------
+ * Represents a single course taken by a student, including the course
+ * code, name, marks obtained, and maximum possible marks.
+ */
+typedef struct {
+    char courseCode[MAX_CODE_LEN];
+    char courseName[MAX_COURSE_NAME];
+    float marksObtained;
+    float maxMarks;
+} CourseRecord;
+
+/*
