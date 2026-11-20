@@ -46,3 +46,19 @@ typedef struct {
 } CourseRecord;
 
 /*
+ * Student
+ * -------
+ * Represents a student record containing personal information,
+ * programme of study, and a dynamically allocated array of courses.
+ */
+typedef struct {
+    int studentID;
+    char firstName[MAX_NAME_LEN];
+    char lastName[MAX_NAME_LEN];
+    char programme[MAX_PROGRAMME_LEN];
+    int yearOfStudy;
+    int numCourses;
+    CourseRecord *courses;  /* dynamically allocated array of courses */
+} Student;
+
+/* ========================== FUNCTION PROTOTYPES ========================== */
