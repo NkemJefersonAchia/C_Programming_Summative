@@ -62,3 +62,49 @@ typedef struct {
 } Student;
 
 /* ========================== FUNCTION PROTOTYPES ========================== */
+
+/* --- Menu and UI --- */
+void displayMenu(void);
+
+/* --- Student CRUD Operations --- */
+void registerStudent(Student **students, int *numStudents);
+void displayAllStudents(Student *students, int numStudents);
+void viewStudentDetails(Student *students, int numStudents);
+void updateStudentInfo(Student *students, int numStudents);
+void deleteStudent(Student **students, int *numStudents);
+
+/* --- Course Operations --- */
+void addCourseToStudent(Student *students, int numStudents);
+void updateCourseMarks(Student *students, int numStudents);
+void displayAcademicPerformance(Student *students, int numStudents);
+
+/* --- Searching --- */
+void searchStudents(Student *students, int numStudents);
+int searchByID(Student *students, int numStudents, int targetID);
+void searchByName(Student *students, int numStudents, const char *name);
+void searchByProgramme(Student *students, int numStudents, const char *programme);
+
+/* --- Sorting --- */
+void sortStudents(Student *students, int numStudents);
+void sortByID(Student *students, int numStudents);
+void sortByName(Student *students, int numStudents);
+void sortByAverage(Student *students, int numStudents);
+void sortByProgramme(Student *students, int numStudents);
+
+/* --- Academic Report --- */
+void generateAcademicReport(Student *students, int numStudents);
+
+/* --- File Handling --- */
+void saveRecordsToFile(Student *students, int numStudents);
+void loadRecordsFromFile(Student **students, int *numStudents);
+
+/* --- Utility Functions --- */
+float calculateStudentAverage(Student *student);
+void clearInputBuffer(void);
+int isDuplicateID(Student *students, int numStudents, int id);
+void strToLower(char *dest, const char *src);
+void freeAllMemory(Student *students, int numStudents);
+void displayStudentSummary(Student *student);
+void displayStudentFull(Student *student);
+
+#endif /* STUDENT_RECORDS_H */
