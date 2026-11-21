@@ -988,3 +988,93 @@ void sortStudents(Student *students, int numStudents) {
  * ----------------------
  * Generates a comprehensive academic report including:
  *   - Total registered students
+ *   - Total courses across all students
+ *   - Overall average academic performance
+ *   - Student with highest/lowest average
+ *   - Number passing/failing
+ *   - Average performance per course
+ *   - Number of students per programme
+ */
+void generateAcademicReport(Student *students, int numStudents) {
+    int i, j, k;
+    int totalCourses = 0;
+    int totalPassing = 0, totalFailing = 0;
+    float overallSum = 0.0f;
+    float highestAvg = -1.0f, lowestAvg = 101.0f;
+    int highestIdx = 0, lowestIdx = 0;
+    float avg;
+
+    /* For per-course averages: track unique course codes */
+    char courseNames[500][MAX_CODE_LEN];
+    float courseSums[500];
+    int courseCounts[500];
+    int uniqueCourses = 0;
+
+    /* For per-programme counts */
+    char progNames[100][MAX_PROGRAMME_LEN];
+    int progCounts[100];
+    int uniqueProgs = 0;
+
+    printf("\n");
+    printf("============================================================\n");
+    printf("           COMPREHENSIVE ACADEMIC REPORT\n");
+    printf("============================================================\n");
+
+    if (numStudents == 0) {
+        printf("No students registered. Report cannot be generated.\n");
+        return;
+    }
+
+    /* Initialize arrays */
+    memset(courseSums, 0, sizeof(courseSums));
+    memset(courseCounts, 0, sizeof(courseCounts));
+    memset(progCounts, 0, sizeof(progCounts));
+
+    /* Compute statistics */
+    for (i = 0; i < numStudents; i++) {
+        Student *s = students + i;
+        int studentPassing = 1; /* Assume passing until a course fails */
+
+        totalCourses += s->numCourses;
+
+        /* Calculate student average */
+        avg = calculateStudentAverage(s);
+        overallSum += avg;
+
+        if (avg > highestAvg) {
+            highestAvg = avg;
+            highestIdx = i;
+        }
+        if (avg < lowestAvg) {
+            lowestAvg = avg;
+            lowestIdx = i;
+        }
+
+        /* Check pass/fail per course for this student */
+        for (j = 0; j < s->numCourses; j++) {
+            CourseRecord *c = s->courses + j;
+            float pct = (c->maxMarks > 0) ? (c->marksObtained / c->maxMarks) * 100.0f : 0.0f;
+
+            if (pct < PASS_THRESHOLD) {
+                studentPassing = 0;
+            }
+
+            /* Track per-course average */
+            {
+                int found = 0;
+                for (k = 0; k < uniqueCourses; k++) {
+                    if (strcmp(courseNames[k], c->courseCode) == 0) {
+                        courseSums[k] += pct;
+                        courseCounts[k]++;
+                        found = 1;
+                        break;
+                    }
+                }
+                if (!found && uniqueCourses < 500) {
+                    strncpy(courseNames[uniqueCourses], c->courseCode, MAX_CODE_LEN - 1);
+                    courseNames[uniqueCourses][MAX_CODE_LEN - 1] = '\0';
+                    courseSums[uniqueCourses] = pct;
+                    courseCounts[uniqueCourses] = 1;
+                    uniqueCourses++;
+                }
+            }
