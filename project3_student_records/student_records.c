@@ -408,3 +408,73 @@ void updateStudentInfo(Student *students, int numStudents) {
             break;
         default:
             printf("Invalid choice.\n");
+            break;
+    }
+}
+
+/*
+ * deleteStudent
+ * -------------
+ * Deletes a student record by ID. Frees the student's course memory,
+ * shifts remaining elements, and uses realloc() to shrink the array.
+ */
+void deleteStudent(Student **students, int *numStudents) {
+    int id, index, i;
+    Student *temp;
+
+    printf("\n--- Delete Student Record ---\n");
+    if (*numStudents == 0) {
+        printf("No students registered.\n");
+        return;
+    }
+
+    printf("Enter Student ID to delete: ");
+    if (scanf("%d", &id) != 1) {
+        printf("Error: Invalid input.\n");
+        clearInputBuffer();
+        return;
+    }
+    clearInputBuffer();
+
+    index = searchByID(*students, *numStudents, id);
+    if (index == -1) {
+        printf("Error: Student with ID %d not found.\n", id);
+        return;
+    }
+
+    printf("Deleting student: %s %s (ID: %d)\n",
+           (*students + index)->firstName,
+           (*students + index)->lastName,
+           (*students + index)->studentID);
+
+    /* Free the student's courses array */
+    if ((*students + index)->courses != NULL) {
+        free((*students + index)->courses);
+        (*students + index)->courses = NULL;
+    }
+
+    /* Shift remaining students left */
+    for (i = index; i < *numStudents - 1; i++) {
+        *(*students + i) = *(*students + i + 1);
+    }
+
+    (*numStudents)--;
+
+    /* Shrink the array or free if empty */
+    if (*numStudents == 0) {
+        free(*students);
+        *students = NULL;
+    } else {
+        temp = (Student *)realloc(*students, (size_t)(*numStudents) * sizeof(Student));
+        if (temp != NULL) {
+            *students = temp;
+        }
+        /* If realloc fails here, the old pointer is still valid */
+    }
+
+    printf("Student deleted successfully.\n");
+}
+
+/* ============================================================================
+ *                          COURSE OPERATIONS
+ * ============================================================================ */
