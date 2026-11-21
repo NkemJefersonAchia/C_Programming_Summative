@@ -768,3 +768,68 @@ void searchByProgramme(Student *students, int numStudents, const char *programme
         printf("No students found in programme '%s'.\n", programme);
     } else {
         printf("Found %d student(s).\n", found);
+    }
+}
+
+/*
+ * searchStudents
+ * --------------
+ * Presents a sub-menu for choosing the search type, then performs
+ * the appropriate search.
+ */
+void searchStudents(Student *students, int numStudents) {
+    int choice, id, index;
+    char searchTerm[MAX_PROGRAMME_LEN];
+
+    printf("\n--- Search Students ---\n");
+    if (numStudents == 0) {
+        printf("No students registered.\n");
+        return;
+    }
+
+    printf("Search by:\n");
+    printf("1. Student ID\n");
+    printf("2. Name (first or last)\n");
+    printf("3. Programme\n");
+    printf("Choice: ");
+    if (scanf("%d", &choice) != 1) {
+        printf("Error: Invalid input.\n");
+        clearInputBuffer();
+        return;
+    }
+    clearInputBuffer();
+
+    switch (choice) {
+        case 1:
+            printf("Enter Student ID: ");
+            if (scanf("%d", &id) != 1) {
+                printf("Error: Invalid input.\n");
+                clearInputBuffer();
+                return;
+            }
+            clearInputBuffer();
+            index = searchByID(students, numStudents, id);
+            if (index == -1) {
+                printf("Student with ID %d not found.\n", id);
+            } else {
+                printf("Student found:\n");
+                displayStudentFull(students + index);
+            }
+            break;
+        case 2:
+            printf("Enter name to search: ");
+            fgets(searchTerm, MAX_NAME_LEN, stdin);
+            searchTerm[strcspn(searchTerm, "\n")] = '\0';
+            searchByName(students, numStudents, searchTerm);
+            break;
+        case 3:
+            printf("Enter programme to search: ");
+            fgets(searchTerm, MAX_PROGRAMME_LEN, stdin);
+            searchTerm[strcspn(searchTerm, "\n")] = '\0';
+            searchByProgramme(students, numStudents, searchTerm);
+            break;
+        default:
+            printf("Invalid search option.\n");
+            break;
+    }
+}
