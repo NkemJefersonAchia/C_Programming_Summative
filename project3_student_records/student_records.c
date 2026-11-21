@@ -918,3 +918,73 @@ void sortByAverage(Student *students, int numStudents) {
  */
 void sortByProgramme(Student *students, int numStudents) {
     int i, j;
+    Student temp;
+
+    for (i = 0; i < numStudents - 1; i++) {
+        for (j = 0; j < numStudents - 1 - i; j++) {
+            if (strcmp((students + j)->programme, (students + j + 1)->programme) > 0) {
+                temp = *(students + j);
+                *(students + j) = *(students + j + 1);
+                *(students + j + 1) = temp;
+            }
+        }
+    }
+    printf("Students sorted by programme (alphabetical).\n");
+}
+
+/*
+ * sortStudents
+ * ------------
+ * Presents a sub-menu for choosing the sort criteria, then performs
+ * the appropriate sort using manual bubble sort.
+ */
+void sortStudents(Student *students, int numStudents) {
+    int choice;
+
+    printf("\n--- Sort Students ---\n");
+    if (numStudents == 0) {
+        printf("No students to sort.\n");
+        return;
+    }
+
+    printf("Sort by:\n");
+    printf("1. Student ID\n");
+    printf("2. Name (alphabetical)\n");
+    printf("3. Academic Average\n");
+    printf("4. Programme\n");
+    printf("Choice: ");
+    if (scanf("%d", &choice) != 1) {
+        printf("Error: Invalid input.\n");
+        clearInputBuffer();
+        return;
+    }
+    clearInputBuffer();
+
+    switch (choice) {
+        case 1:
+            sortByID(students, numStudents);
+            break;
+        case 2:
+            sortByName(students, numStudents);
+            break;
+        case 3:
+            sortByAverage(students, numStudents);
+            break;
+        case 4:
+            sortByProgramme(students, numStudents);
+            break;
+        default:
+            printf("Invalid sort option.\n");
+            break;
+    }
+}
+
+/* ============================================================================
+ *                        ACADEMIC REPORT
+ * ============================================================================ */
+
+/*
+ * generateAcademicReport
+ * ----------------------
+ * Generates a comprehensive academic report including:
+ *   - Total registered students
