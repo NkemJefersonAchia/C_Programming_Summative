@@ -833,3 +833,88 @@ void searchStudents(Student *students, int numStudents) {
             break;
     }
 }
+
+/* ============================================================================
+ *                              SORTING
+ *       (Manual implementations — NO qsort used)
+ * ============================================================================ */
+
+/*
+ * sortByID
+ * --------
+ * Sorts students array by Student ID in ascending order using bubble sort.
+ */
+void sortByID(Student *students, int numStudents) {
+    int i, j;
+    Student temp;
+
+    for (i = 0; i < numStudents - 1; i++) {
+        for (j = 0; j < numStudents - 1 - i; j++) {
+            if ((students + j)->studentID > (students + j + 1)->studentID) {
+                temp = *(students + j);
+                *(students + j) = *(students + j + 1);
+                *(students + j + 1) = temp;
+            }
+        }
+    }
+    printf("Students sorted by ID (ascending).\n");
+}
+
+/*
+ * sortByName
+ * ----------
+ * Sorts students array alphabetically by last name, then first name,
+ * using bubble sort with strcmp().
+ */
+void sortByName(Student *students, int numStudents) {
+    int i, j, cmp;
+    Student temp;
+
+    for (i = 0; i < numStudents - 1; i++) {
+        for (j = 0; j < numStudents - 1 - i; j++) {
+            cmp = strcmp((students + j)->lastName, (students + j + 1)->lastName);
+            if (cmp == 0) {
+                cmp = strcmp((students + j)->firstName, (students + j + 1)->firstName);
+            }
+            if (cmp > 0) {
+                temp = *(students + j);
+                *(students + j) = *(students + j + 1);
+                *(students + j + 1) = temp;
+            }
+        }
+    }
+    printf("Students sorted by name (alphabetical).\n");
+}
+
+/*
+ * sortByAverage
+ * -------------
+ * Sorts students array by overall academic average in descending order
+ * using bubble sort.
+ */
+void sortByAverage(Student *students, int numStudents) {
+    int i, j;
+    Student temp;
+    float avgJ, avgJ1;
+
+    for (i = 0; i < numStudents - 1; i++) {
+        for (j = 0; j < numStudents - 1 - i; j++) {
+            avgJ = calculateStudentAverage(students + j);
+            avgJ1 = calculateStudentAverage(students + j + 1);
+            if (avgJ < avgJ1) {  /* Descending order */
+                temp = *(students + j);
+                *(students + j) = *(students + j + 1);
+                *(students + j + 1) = temp;
+            }
+        }
+    }
+    printf("Students sorted by academic average (descending).\n");
+}
+
+/*
+ * sortByProgramme
+ * ---------------
+ * Sorts students array alphabetically by programme using bubble sort.
+ */
+void sortByProgramme(Student *students, int numStudents) {
+    int i, j;
