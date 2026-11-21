@@ -55,3 +55,38 @@ typedef struct {
 
 /* ============================================================================
  * Function Pointer Type Definitions
+ * ============================================================================ */
+
+/**
+ * SalesProcessor - Function pointer type for sales data processing operations.
+ *
+ * Functions matching this signature take the transaction array and count,
+ * and return a float result (e.g., total revenue, average value, etc.).
+ *
+ * Usage: Assigned at runtime based on user menu selection (menu option 5).
+ */
+typedef float (*SalesProcessor)(Transaction *transactions, int count);
+
+/**
+ * TransactionFilter - Callback function pointer type for filtering transactions.
+ *
+ * Functions matching this signature evaluate a single transaction against
+ * criteria and return 1 (match) or 0 (no match).
+ *
+ * Parameters:
+ *   t        - Pointer to the transaction to evaluate
+ *   criteria - Generic pointer to filter criteria (cast inside callback)
+ *
+ * Usage: Passed to applyFilter() to filter transactions by various criteria.
+ */
+typedef int (*TransactionFilter)(Transaction *t, void *criteria);
+
+/**
+ * CompareFunc - Comparison callback function pointer for sorting.
+ *
+ * Functions matching this signature compare two transactions and return:
+ *   negative if a < b, zero if equal, positive if a > b
+ */
+typedef int (*CompareFunc)(const Transaction *a, const Transaction *b);
+
+/* ============================================================================
