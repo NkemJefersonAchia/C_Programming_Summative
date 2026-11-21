@@ -1178,3 +1178,83 @@ void saveRecordsToFile(Student *students, int numStudents) {
 
     fp = fopen(DATA_FILE, "w");
     if (fp == NULL) {
+        printf("Error: Could not open file '%s' for writing.\n", DATA_FILE);
+        return;
+    }
+
+    fprintf(fp, "STUDENT_COUNT: %d\n", numStudents);
+
+    for (i = 0; i < numStudents; i++) {
+        Student *s = students + i;
+
+        fprintf(fp, "---\n");
+        fprintf(fp, "ID: %d\n", s->studentID);
+        fprintf(fp, "FIRST_NAME: %s\n", s->firstName);
+        fprintf(fp, "LAST_NAME: %s\n", s->lastName);
+        fprintf(fp, "PROGRAMME: %s\n", s->programme);
+        fprintf(fp, "YEAR: %d\n", s->yearOfStudy);
+        fprintf(fp, "NUM_COURSES: %d\n", s->numCourses);
+
+        for (j = 0; j < s->numCourses; j++) {
+            CourseRecord *c = s->courses + j;
+            fprintf(fp, "COURSE: %s | %s | %.2f | %.2f\n",
+                    c->courseCode, c->courseName,
+                    c->marksObtained, c->maxMarks);
+        }
+    }
+
+    fprintf(fp, "---\n");
+    fclose(fp);
+
+    printf("Records saved to '%s' (%d students).\n", DATA_FILE, numStudents);
+}
+
+/*
+ * loadRecordsFromFile
+ * -------------------
+ * Loads student and course records from a text file (students_data.txt).
+ * Dynamically allocates memory for students and their courses.
+ * Frees any existing records before loading.
+ */
+void loadRecordsFromFile(Student **students, int *numStudents) {
+    FILE *fp;
+    char line[512];
+    int count = 0;
+    int currentStudent = -1;
+    printf("\n--- Load Records from File ---\n");
+
+    fp = fopen(DATA_FILE, "r");
+    if (fp == NULL) {
+        printf("Note: File '%s' not found. No records loaded.\n", DATA_FILE);
+        return;
+    }
+
+    /* Free existing records */
+    if (*students != NULL) {
+        freeAllMemory(*students, *numStudents);
+        *students = NULL;
+        *numStudents = 0;
+    }
+
+    /* Read the student count */
+    if (fgets(line, sizeof(line), fp) != NULL) {
+        sscanf(line, "STUDENT_COUNT: %d", &count);
+    }
+
+    if (count <= 0) {
+        printf("No student records found in file.\n");
+        fclose(fp);
+        return;
+    }
+
+    /* Allocate memory for all students */
+    *students = (Student *)malloc((size_t)count * sizeof(Student));
+    if (*students == NULL) {
+        printf("Error: Memory allocation failed while loading records.\n");
+        fclose(fp);
+        return;
+    }
+
+    /* Initialize all students */
+    {
+        int i;
