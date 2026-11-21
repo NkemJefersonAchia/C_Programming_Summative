@@ -1078,3 +1078,103 @@ void generateAcademicReport(Student *students, int numStudents) {
                     uniqueCourses++;
                 }
             }
+        }
+
+        if (studentPassing) {
+            totalPassing++;
+        } else {
+            totalFailing++;
+        }
+
+        /* Track per-programme counts */
+        {
+            int found = 0;
+            for (k = 0; k < uniqueProgs; k++) {
+                if (strcmp(progNames[k], s->programme) == 0) {
+                    progCounts[k]++;
+                    found = 1;
+                    break;
+                }
+            }
+            if (!found && uniqueProgs < 100) {
+                strncpy(progNames[uniqueProgs], s->programme, MAX_PROGRAMME_LEN - 1);
+                progNames[uniqueProgs][MAX_PROGRAMME_LEN - 1] = '\0';
+                progCounts[uniqueProgs] = 1;
+                uniqueProgs++;
+            }
+        }
+    }
+
+    /* ---- Print Report ---- */
+    printf("\n1. GENERAL STATISTICS\n");
+    printf("   Total Registered Students : %d\n", numStudents);
+    printf("   Total Courses (all students): %d\n", totalCourses);
+    printf("   Overall Average Performance : %.2f%%\n",
+           (numStudents > 0) ? overallSum / numStudents : 0.0f);
+
+    printf("\n2. TOP / BOTTOM PERFORMERS\n");
+    printf("   Highest Average: %s %s (ID: %d) — %.2f%%\n",
+           (students + highestIdx)->firstName,
+           (students + highestIdx)->lastName,
+           (students + highestIdx)->studentID,
+           highestAvg);
+    printf("   Lowest Average : %s %s (ID: %d) — %.2f%%\n",
+           (students + lowestIdx)->firstName,
+           (students + lowestIdx)->lastName,
+           (students + lowestIdx)->studentID,
+           lowestAvg);
+
+    printf("\n3. PASS / FAIL SUMMARY\n");
+    printf("   Students Passing (all courses >= 50%%): %d\n", totalPassing);
+    printf("   Students Failing (at least one < 50%%): %d\n", totalFailing);
+
+    printf("\n4. AVERAGE PERFORMANCE PER COURSE\n");
+    if (uniqueCourses == 0) {
+        printf("   No courses recorded.\n");
+    } else {
+        printf("   %-15s %10s %10s\n", "Course Code", "Avg (%)", "Students");
+        for (i = 0; i < 40; i++) printf("-");
+        printf("\n");
+        for (i = 0; i < uniqueCourses; i++) {
+            printf("   %-15s %9.2f%% %10d\n",
+                   courseNames[i],
+                   (courseCounts[i] > 0) ? courseSums[i] / courseCounts[i] : 0.0f,
+                   courseCounts[i]);
+        }
+    }
+
+    printf("\n5. STUDENTS PER PROGRAMME\n");
+    if (uniqueProgs == 0) {
+        printf("   No programmes recorded.\n");
+    } else {
+        printf("   %-40s %10s\n", "Programme", "Students");
+        for (i = 0; i < 55; i++) printf("-");
+        printf("\n");
+        for (i = 0; i < uniqueProgs; i++) {
+            printf("   %-40s %10d\n", progNames[i], progCounts[i]);
+        }
+    }
+
+    printf("\n============================================================\n");
+    printf("                   END OF REPORT\n");
+    printf("============================================================\n");
+}
+
+/* ============================================================================
+ *                          FILE HANDLING
+ * ============================================================================ */
+
+/*
+ * saveRecordsToFile
+ * -----------------
+ * Saves all student and course records to a text file (students_data.txt).
+ * Format: structured plain text with delimiters for parsing.
+ */
+void saveRecordsToFile(Student *students, int numStudents) {
+    int i, j;
+    FILE *fp;
+
+    printf("\n--- Save Records to File ---\n");
+
+    fp = fopen(DATA_FILE, "w");
+    if (fp == NULL) {
