@@ -338,3 +338,73 @@ void viewStudentDetails(Student *students, int numStudents) {
 void updateStudentInfo(Student *students, int numStudents) {
     int id, index, choice, year;
     Student *s;
+
+    printf("\n--- Update Student Information ---\n");
+    if (numStudents == 0) {
+        printf("No students registered.\n");
+        return;
+    }
+
+    printf("Enter Student ID: ");
+    if (scanf("%d", &id) != 1) {
+        printf("Error: Invalid input.\n");
+        clearInputBuffer();
+        return;
+    }
+    clearInputBuffer();
+
+    index = searchByID(students, numStudents, id);
+    if (index == -1) {
+        printf("Error: Student with ID %d not found.\n", id);
+        return;
+    }
+
+    s = students + index;
+    printf("Current info: %s %s, Programme: %s, Year: %d\n",
+           s->firstName, s->lastName, s->programme, s->yearOfStudy);
+
+    printf("\nWhat would you like to update?\n");
+    printf("1. First Name\n");
+    printf("2. Last Name\n");
+    printf("3. Programme\n");
+    printf("4. Year of Study\n");
+    printf("Choice: ");
+    if (scanf("%d", &choice) != 1) {
+        printf("Error: Invalid input.\n");
+        clearInputBuffer();
+        return;
+    }
+    clearInputBuffer();
+
+    switch (choice) {
+        case 1:
+            printf("Enter new First Name: ");
+            fgets(s->firstName, MAX_NAME_LEN, stdin);
+            s->firstName[strcspn(s->firstName, "\n")] = '\0';
+            printf("First name updated.\n");
+            break;
+        case 2:
+            printf("Enter new Last Name: ");
+            fgets(s->lastName, MAX_NAME_LEN, stdin);
+            s->lastName[strcspn(s->lastName, "\n")] = '\0';
+            printf("Last name updated.\n");
+            break;
+        case 3:
+            printf("Enter new Programme: ");
+            fgets(s->programme, MAX_PROGRAMME_LEN, stdin);
+            s->programme[strcspn(s->programme, "\n")] = '\0';
+            printf("Programme updated.\n");
+            break;
+        case 4:
+            printf("Enter new Year of Study (%d-%d): ", MIN_YEAR, MAX_YEAR);
+            if (scanf("%d", &year) != 1 || year < MIN_YEAR || year > MAX_YEAR) {
+                printf("Error: Year must be between %d and %d.\n", MIN_YEAR, MAX_YEAR);
+                clearInputBuffer();
+                return;
+            }
+            clearInputBuffer();
+            s->yearOfStudy = year;
+            printf("Year of study updated.\n");
+            break;
+        default:
+            printf("Invalid choice.\n");
