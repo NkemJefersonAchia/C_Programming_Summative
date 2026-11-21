@@ -638,3 +638,73 @@ void updateCourseMarks(Student *students, int numStudents) {
  * each course's percentage and pass/fail status.
  */
 void displayAcademicPerformance(Student *students, int numStudents) {
+    int id, index, i;
+    Student *s;
+
+    printf("\n--- Academic Performance ---\n");
+    if (numStudents == 0) {
+        printf("No students registered.\n");
+        return;
+    }
+
+    printf("Enter Student ID: ");
+    if (scanf("%d", &id) != 1) {
+        printf("Error: Invalid input.\n");
+        clearInputBuffer();
+        return;
+    }
+    clearInputBuffer();
+
+    index = searchByID(students, numStudents, id);
+    if (index == -1) {
+        printf("Error: Student with ID %d not found.\n", id);
+        return;
+    }
+
+    s = students + index;
+    printf("\nAcademic Performance for %s %s (ID: %d)\n",
+           s->firstName, s->lastName, s->studentID);
+    printf("Programme: %s, Year: %d\n\n", s->programme, s->yearOfStudy);
+
+    if (s->numCourses == 0) {
+        printf("No courses enrolled.\n");
+        return;
+    }
+
+    printf("%-15s %-30s %8s %8s %8s %10s\n",
+           "Code", "Course", "Marks", "Max", "Pct(%)", "Status");
+    for (i = 0; i < 85; i++) printf("-");
+    printf("\n");
+
+    for (i = 0; i < s->numCourses; i++) {
+        CourseRecord *c = s->courses + i;
+        float pct = (c->maxMarks > 0) ? (c->marksObtained / c->maxMarks) * 100.0f : 0.0f;
+        const char *status = (pct >= PASS_THRESHOLD) ? "PASS" : "FAIL";
+        printf("%-15s %-30s %8.2f %8.2f %7.2f%% %10s\n",
+               c->courseCode, c->courseName,
+               c->marksObtained, c->maxMarks, pct, status);
+    }
+
+    printf("\nOverall Average: %.2f%%\n", calculateStudentAverage(s));
+}
+
+/* ============================================================================
+ *                            SEARCHING
+ * ============================================================================ */
+
+/*
+ * searchByID
+ * ----------
+ * Linear search for a student by ID.
+ * Returns: index of the student if found, -1 otherwise.
+ */
+int searchByID(Student *students, int numStudents, int targetID) {
+    int i;
+    for (i = 0; i < numStudents; i++) {
+        if ((students + i)->studentID == targetID) {
+            return i;
+        }
+    }
+    return -1;
+}
+
