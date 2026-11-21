@@ -478,3 +478,83 @@ void deleteStudent(Student **students, int *numStudents) {
 /* ============================================================================
  *                          COURSE OPERATIONS
  * ============================================================================ */
+
+/*
+ * addCourseToStudent
+ * ------------------
+ * Adds a new course record to a specified student. Dynamically allocates
+ * or expands the student's courses array using realloc().
+ * Validates marks (0 to maxMarks).
+ */
+void addCourseToStudent(Student *students, int numStudents) {
+    int id, index;
+    float marks, maxMarks;
+    Student *s;
+    CourseRecord *temp;
+    CourseRecord *newCourse;
+
+    printf("\n--- Add Course to Student ---\n");
+    if (numStudents == 0) {
+        printf("No students registered.\n");
+        return;
+    }
+
+    printf("Enter Student ID: ");
+    if (scanf("%d", &id) != 1) {
+        printf("Error: Invalid input.\n");
+        clearInputBuffer();
+        return;
+    }
+    clearInputBuffer();
+
+    index = searchByID(students, numStudents, id);
+    if (index == -1) {
+        printf("Error: Student with ID %d not found.\n", id);
+        return;
+    }
+
+    s = students + index;
+
+    /* Expand the courses array */
+    temp = (CourseRecord *)realloc(s->courses, (size_t)(s->numCourses + 1) * sizeof(CourseRecord));
+    if (temp == NULL) {
+        printf("Error: Memory allocation failed. Cannot add course.\n");
+        return;
+    }
+    s->courses = temp;
+
+    newCourse = s->courses + s->numCourses;
+
+    /* Get course code */
+    printf("Enter Course Code: ");
+    fgets(newCourse->courseCode, MAX_CODE_LEN, stdin);
+    newCourse->courseCode[strcspn(newCourse->courseCode, "\n")] = '\0';
+
+    /* Get course name */
+    printf("Enter Course Name: ");
+    fgets(newCourse->courseName, MAX_COURSE_NAME, stdin);
+    newCourse->courseName[strcspn(newCourse->courseName, "\n")] = '\0';
+
+    /* Get and validate max marks */
+    printf("Enter Maximum Marks: ");
+    if (scanf("%f", &maxMarks) != 1 || maxMarks <= 0) {
+        printf("Error: Maximum marks must be a positive number.\n");
+        clearInputBuffer();
+        return;
+    }
+    clearInputBuffer();
+    newCourse->maxMarks = maxMarks;
+
+    /* Get and validate marks obtained */
+    printf("Enter Marks Obtained (0 to %.2f): ", maxMarks);
+    if (scanf("%f", &marks) != 1 || marks < 0 || marks > maxMarks) {
+        printf("Error: Marks must be between 0 and %.2f.\n", maxMarks);
+        clearInputBuffer();
+        return;
+    }
+    clearInputBuffer();
+    newCourse->marksObtained = marks;
+
+    s->numCourses++;
+    printf("Course '%s' added to student %s %s.\n",
+           newCourse->courseName, s->firstName, s->lastName);
