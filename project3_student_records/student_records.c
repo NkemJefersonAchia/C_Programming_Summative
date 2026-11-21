@@ -198,3 +198,73 @@ void displayMenu(void) {
 /*
  * registerStudent
  * ---------------
+ * Registers a new student by collecting their information and adding them
+ * to the dynamically allocated students array using realloc().
+ * Validates for duplicate IDs and valid year of study.
+ */
+void registerStudent(Student **students, int *numStudents) {
+    int id, year;
+    Student *temp;
+    Student *newStudent;
+
+    printf("\n--- Register New Student ---\n");
+
+    /* Get and validate student ID */
+    printf("Enter Student ID: ");
+    if (scanf("%d", &id) != 1) {
+        printf("Error: Invalid input for Student ID.\n");
+        clearInputBuffer();
+        return;
+    }
+    clearInputBuffer();
+
+    /* Check for duplicate ID */
+    if (isDuplicateID(*students, *numStudents, id)) {
+        printf("Error: Student ID %d already exists.\n", id);
+        return;
+    }
+
+    /* Expand the students array using realloc */
+    temp = (Student *)realloc(*students, (size_t)(*numStudents + 1) * sizeof(Student));
+    if (temp == NULL) {
+        printf("Error: Memory allocation failed. Cannot register student.\n");
+        return;
+    }
+    *students = temp;
+
+    /* Pointer to the new student slot */
+    newStudent = *students + *numStudents;
+
+    /* Initialize the new student */
+    newStudent->studentID = id;
+    newStudent->numCourses = 0;
+    newStudent->courses = NULL;
+
+    /* Get first name */
+    printf("Enter First Name: ");
+    fgets(newStudent->firstName, MAX_NAME_LEN, stdin);
+    newStudent->firstName[strcspn(newStudent->firstName, "\n")] = '\0';
+
+    /* Get last name */
+    printf("Enter Last Name: ");
+    fgets(newStudent->lastName, MAX_NAME_LEN, stdin);
+    newStudent->lastName[strcspn(newStudent->lastName, "\n")] = '\0';
+
+    /* Get programme */
+    printf("Enter Programme: ");
+    fgets(newStudent->programme, MAX_PROGRAMME_LEN, stdin);
+    newStudent->programme[strcspn(newStudent->programme, "\n")] = '\0';
+
+    /* Get and validate year of study */
+    printf("Enter Year of Study (%d-%d): ", MIN_YEAR, MAX_YEAR);
+    if (scanf("%d", &year) != 1 || year < MIN_YEAR || year > MAX_YEAR) {
+        printf("Error: Year of study must be between %d and %d.\n", MIN_YEAR, MAX_YEAR);
+        clearInputBuffer();
+        /* Remove the partially added student by not incrementing count */
+        return;
+    }
+    clearInputBuffer();
+    newStudent->yearOfStudy = year;
+
+    (*numStudents)++;
+    printf("Student '%s %s' (ID: %d) registered successfully.\n",
