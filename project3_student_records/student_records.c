@@ -1258,3 +1258,113 @@ void loadRecordsFromFile(Student **students, int *numStudents) {
     /* Initialize all students */
     {
         int i;
+        for (i = 0; i < count; i++) {
+            (*students + i)->courses = NULL;
+            (*students + i)->numCourses = 0;
+        }
+    }
+
+    currentStudent = -1;
+
+    while (fgets(line, sizeof(line), fp) != NULL) {
+        /* Remove trailing newline */
+        line[strcspn(line, "\n")] = '\0';
+
+        if (strcmp(line, "---") == 0) {
+            currentStudent++;
+            continue;
+        }
+
+        if (currentStudent < 0 || currentStudent >= count) {
+            continue;
+        }
+
+        {
+            Student *s = *students + currentStudent;
+
+            if (strncmp(line, "ID: ", 4) == 0) {
+                sscanf(line + 4, "%d", &s->studentID);
+            } else if (strncmp(line, "FIRST_NAME: ", 12) == 0) {
+                strncpy(s->firstName, line + 12, MAX_NAME_LEN - 1);
+                s->firstName[MAX_NAME_LEN - 1] = '\0';
+            } else if (strncmp(line, "LAST_NAME: ", 11) == 0) {
+                strncpy(s->lastName, line + 11, MAX_NAME_LEN - 1);
+                s->lastName[MAX_NAME_LEN - 1] = '\0';
+            } else if (strncmp(line, "PROGRAMME: ", 11) == 0) {
+                strncpy(s->programme, line + 11, MAX_PROGRAMME_LEN - 1);
+                s->programme[MAX_PROGRAMME_LEN - 1] = '\0';
+            } else if (strncmp(line, "YEAR: ", 6) == 0) {
+                sscanf(line + 6, "%d", &s->yearOfStudy);
+            } else if (strncmp(line, "NUM_COURSES: ", 13) == 0) {
+                int nc = 0;
+                sscanf(line + 13, "%d", &nc);
+                /* Allocate courses array */
+                if (nc > 0) {
+                    s->courses = (CourseRecord *)malloc((size_t)nc * sizeof(CourseRecord));
+                    if (s->courses == NULL) {
+                        printf("Error: Memory allocation failed for courses of student %d.\n",
+                               s->studentID);
+                        nc = 0;
+                    }
+                }
+                /* numCourses will be incremented as courses are read */
+                s->numCourses = 0;
+            } else if (strncmp(line, "COURSE: ", 8) == 0) {
+                /* Parse: COURSE: code | name | marks | maxMarks */
+                if (s->courses != NULL) {
+                    CourseRecord *c = s->courses + s->numCourses;
+                    char *ptr = line + 8;
+                    char *token;
+
+                    /* Parse course code */
+                    token = strtok(ptr, "|");
+                    if (token != NULL) {
+                        /* Trim trailing space */
+                        while (*token == ' ') token++;
+                        strncpy(c->courseCode, token, MAX_CODE_LEN - 1);
+                        c->courseCode[MAX_CODE_LEN - 1] = '\0';
+                        /* Trim trailing spaces from code */
+                        {
+                            int len = (int)strlen(c->courseCode);
+                            while (len > 0 && c->courseCode[len - 1] == ' ') {
+                                c->courseCode[len - 1] = '\0';
+                                len--;
+                            }
+                        }
+                    }
+
+                    /* Parse course name */
+                    token = strtok(NULL, "|");
+                    if (token != NULL) {
+                        while (*token == ' ') token++;
+                        strncpy(c->courseName, token, MAX_COURSE_NAME - 1);
+                        c->courseName[MAX_COURSE_NAME - 1] = '\0';
+                        {
+                            int len = (int)strlen(c->courseName);
+                            while (len > 0 && c->courseName[len - 1] == ' ') {
+                                c->courseName[len - 1] = '\0';
+                                len--;
+                            }
+                        }
+                    }
+
+                    /* Parse marks obtained */
+                    token = strtok(NULL, "|");
+                    if (token != NULL) {
+                        sscanf(token, "%f", &c->marksObtained);
+                    }
+
+                    /* Parse max marks */
+                    token = strtok(NULL, "|");
+                    if (token != NULL) {
+                        sscanf(token, "%f", &c->maxMarks);
+                    }
+
+                    s->numCourses++;
+                }
+            }
+        }
+    }
+
+    *numStudents = count;
+    fclose(fp);
