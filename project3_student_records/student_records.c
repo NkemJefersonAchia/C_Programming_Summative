@@ -708,3 +708,63 @@ int searchByID(Student *students, int numStudents, int targetID) {
     return -1;
 }
 
+/*
+ * searchByName
+ * ------------
+ * Case-insensitive search for students whose first or last name
+ * contains the given search string. Displays all matches.
+ */
+void searchByName(Student *students, int numStudents, const char *name) {
+    int i, found = 0;
+    char lowerSearch[MAX_NAME_LEN];
+    char lowerFirst[MAX_NAME_LEN];
+    char lowerLast[MAX_NAME_LEN];
+
+    strToLower(lowerSearch, name);
+
+    printf("\nSearch results for name '%s':\n", name);
+    for (i = 0; i < numStudents; i++) {
+        strToLower(lowerFirst, (students + i)->firstName);
+        strToLower(lowerLast, (students + i)->lastName);
+
+        if (strstr(lowerFirst, lowerSearch) != NULL ||
+            strstr(lowerLast, lowerSearch) != NULL) {
+            displayStudentSummary(students + i);
+            found++;
+        }
+    }
+
+    if (found == 0) {
+        printf("No students found matching '%s'.\n", name);
+    } else {
+        printf("Found %d student(s).\n", found);
+    }
+}
+
+/*
+ * searchByProgramme
+ * -----------------
+ * Case-insensitive search for students in a given programme.
+ * Displays all matches.
+ */
+void searchByProgramme(Student *students, int numStudents, const char *programme) {
+    int i, found = 0;
+    char lowerSearch[MAX_PROGRAMME_LEN];
+    char lowerProg[MAX_PROGRAMME_LEN];
+
+    strToLower(lowerSearch, programme);
+
+    printf("\nSearch results for programme '%s':\n", programme);
+    for (i = 0; i < numStudents; i++) {
+        strToLower(lowerProg, (students + i)->programme);
+
+        if (strstr(lowerProg, lowerSearch) != NULL) {
+            displayStudentSummary(students + i);
+            found++;
+        }
+    }
+
+    if (found == 0) {
+        printf("No students found in programme '%s'.\n", programme);
+    } else {
+        printf("Found %d student(s).\n", found);
