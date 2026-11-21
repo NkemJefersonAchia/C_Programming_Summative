@@ -268,3 +268,73 @@ void registerStudent(Student **students, int *numStudents) {
 
     (*numStudents)++;
     printf("Student '%s %s' (ID: %d) registered successfully.\n",
+           newStudent->firstName, newStudent->lastName, newStudent->studentID);
+}
+
+/*
+ * displayAllStudents
+ * ------------------
+ * Displays a formatted table of all registered students with summary info.
+ */
+void displayAllStudents(Student *students, int numStudents) {
+    int i;
+
+    printf("\n--- All Registered Students ---\n");
+    if (numStudents == 0) {
+        printf("No students registered.\n");
+        return;
+    }
+
+    printf("+----------+-----------------+-----------------+----------------------+------+----------+---------+\n");
+    printf("| %-8s | %-15s | %-15s | %-20s | %-4s | %-8s | %-7s |\n",
+           "ID", "First Name", "Last Name", "Programme", "Year", "Courses", "Average");
+    printf("+----------+-----------------+-----------------+----------------------+------+----------+---------+\n");
+
+    for (i = 0; i < numStudents; i++) {
+        displayStudentSummary(students + i);
+    }
+
+    printf("+----------+-----------------+-----------------+----------------------+------+----------+---------+\n");
+    printf("Total students: %d\n", numStudents);
+}
+
+/*
+ * viewStudentDetails
+ * ------------------
+ * Prompts for a student ID and displays their full record including courses.
+ */
+void viewStudentDetails(Student *students, int numStudents) {
+    int id, index;
+
+    printf("\n--- View Student Details ---\n");
+    if (numStudents == 0) {
+        printf("No students registered.\n");
+        return;
+    }
+
+    printf("Enter Student ID: ");
+    if (scanf("%d", &id) != 1) {
+        printf("Error: Invalid input.\n");
+        clearInputBuffer();
+        return;
+    }
+    clearInputBuffer();
+
+    index = searchByID(students, numStudents, id);
+    if (index == -1) {
+        printf("Error: Student with ID %d not found.\n", id);
+        return;
+    }
+
+    displayStudentFull(students + index);
+}
+
+/*
+ * updateStudentInfo
+ * -----------------
+ * Updates a student's personal information (name, programme, year).
+ * Provides a sub-menu for selecting which field to update.
+ */
+void updateStudentInfo(Student *students, int numStudents) {
+    int id, index, choice, year;
+    Student *s;
