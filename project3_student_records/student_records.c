@@ -1368,3 +1368,98 @@ void loadRecordsFromFile(Student **students, int *numStudents) {
 
     *numStudents = count;
     fclose(fp);
+
+    printf("Loaded %d student(s) from '%s'.\n", count, DATA_FILE);
+}
+
+/* ============================================================================
+ *                              MAIN FUNCTION
+ * ============================================================================ */
+
+/*
+ * main
+ * ----
+ * Entry point. Initializes the system, loads existing records from file,
+ * runs the main menu loop, and cleans up memory on exit.
+ */
+int main(void) {
+    Student *students = NULL;  /* Dynamically allocated array of students */
+    int numStudents = 0;       /* Current number of students              */
+    int choice;                /* User's menu selection                   */
+
+    printf("============================================\n");
+    printf("  Student Academic Records & Analytics System\n");
+    printf("============================================\n");
+
+    /* Attempt to load existing records on startup */
+    loadRecordsFromFile(&students, &numStudents);
+
+    /* Main menu loop */
+    do {
+        displayMenu();
+
+        if (scanf("%d", &choice) != 1) {
+            printf("Error: Please enter a valid number.\n");
+            clearInputBuffer();
+            choice = -1;  /* Force loop to continue */
+            continue;
+        }
+        clearInputBuffer();
+
+        switch (choice) {
+            case 1:
+                registerStudent(&students, &numStudents);
+                break;
+            case 2:
+                displayAllStudents(students, numStudents);
+                break;
+            case 3:
+                viewStudentDetails(students, numStudents);
+                break;
+            case 4:
+                updateStudentInfo(students, numStudents);
+                break;
+            case 5:
+                deleteStudent(&students, &numStudents);
+                break;
+            case 6:
+                addCourseToStudent(students, numStudents);
+                break;
+            case 7:
+                updateCourseMarks(students, numStudents);
+                break;
+            case 8:
+                displayAcademicPerformance(students, numStudents);
+                break;
+            case 9:
+                searchStudents(students, numStudents);
+                break;
+            case 10:
+                sortStudents(students, numStudents);
+                break;
+            case 11:
+                generateAcademicReport(students, numStudents);
+                break;
+            case 12:
+                saveRecordsToFile(students, numStudents);
+                break;
+            case 13:
+                loadRecordsFromFile(&students, &numStudents);
+                break;
+            case 0:
+                printf("\nSaving records before exit...\n");
+                saveRecordsToFile(students, numStudents);
+                printf("Freeing memory...\n");
+                freeAllMemory(students, numStudents);
+                students = NULL;
+                numStudents = 0;
+                printf("Goodbye!\n");
+                break;
+            default:
+                printf("Invalid choice. Please select 0-13.\n");
+                break;
+        }
+    } while (choice != 0);
+
+    return 0;
+}
