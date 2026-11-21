@@ -558,3 +558,83 @@ void addCourseToStudent(Student *students, int numStudents) {
     s->numCourses++;
     printf("Course '%s' added to student %s %s.\n",
            newCourse->courseName, s->firstName, s->lastName);
+}
+
+/*
+ * updateCourseMarks
+ * -----------------
+ * Updates the marks for an existing course of a specified student.
+ * Validates that new marks are within [0, maxMarks].
+ */
+void updateCourseMarks(Student *students, int numStudents) {
+    int id, index, i, courseChoice;
+    float newMarks;
+    Student *s;
+    CourseRecord *c;
+
+    printf("\n--- Update Course Marks ---\n");
+    if (numStudents == 0) {
+        printf("No students registered.\n");
+        return;
+    }
+
+    printf("Enter Student ID: ");
+    if (scanf("%d", &id) != 1) {
+        printf("Error: Invalid input.\n");
+        clearInputBuffer();
+        return;
+    }
+    clearInputBuffer();
+
+    index = searchByID(students, numStudents, id);
+    if (index == -1) {
+        printf("Error: Student with ID %d not found.\n", id);
+        return;
+    }
+
+    s = students + index;
+    if (s->numCourses == 0) {
+        printf("Student has no courses.\n");
+        return;
+    }
+
+    /* Display courses */
+    printf("Courses for %s %s:\n", s->firstName, s->lastName);
+    for (i = 0; i < s->numCourses; i++) {
+        c = s->courses + i;
+        printf("  %d. %s (%s) — Marks: %.2f / %.2f\n",
+               i + 1, c->courseName, c->courseCode,
+               c->marksObtained, c->maxMarks);
+    }
+
+    printf("Select course number to update: ");
+    if (scanf("%d", &courseChoice) != 1 || courseChoice < 1 || courseChoice > s->numCourses) {
+        printf("Error: Invalid course selection.\n");
+        clearInputBuffer();
+        return;
+    }
+    clearInputBuffer();
+
+    c = s->courses + (courseChoice - 1);
+
+    printf("Current marks for '%s': %.2f / %.2f\n",
+           c->courseName, c->marksObtained, c->maxMarks);
+    printf("Enter new marks (0 to %.2f): ", c->maxMarks);
+    if (scanf("%f", &newMarks) != 1 || newMarks < 0 || newMarks > c->maxMarks) {
+        printf("Error: Marks must be between 0 and %.2f.\n", c->maxMarks);
+        clearInputBuffer();
+        return;
+    }
+    clearInputBuffer();
+
+    c->marksObtained = newMarks;
+    printf("Marks updated to %.2f for '%s'.\n", newMarks, c->courseName);
+}
+
+/*
+ * displayAcademicPerformance
+ * --------------------------
+ * Displays the academic performance of a specific student, showing
+ * each course's percentage and pass/fail status.
+ */
+void displayAcademicPerformance(Student *students, int numStudents) {
