@@ -1058,3 +1058,83 @@ void sortTransactionsMenu(Transaction *transactions, int count) {
  */
 void generateSalesReport(Transaction *transactions, int count) {
     if (count == 0) {
+        printf("\n[Info] No transactions — cannot generate report.\n");
+        return;
+    }
+
+    printf("\n");
+    printf("╔═══════════════════════════════════════════════════╗\n");
+    printf("║           SALES ANALYSIS REPORT                  ║\n");
+    printf("╠═══════════════════════════════════════════════════╣\n");
+
+    /* Use our SalesProcessor functions */
+    float totalRevenue  = calculateTotalRevenue(transactions, count);
+    float avgValue      = calculateAverageValue(transactions, count);
+    float highestAmount = findHighestTransaction(transactions, count);
+    float lowestAmount  = findLowestTransaction(transactions, count);
+    float totalUnits    = calculateTotalUnitsSold(transactions, count);
+
+    printf("║  Total Transactions:    %-10d                ║\n", count);
+    printf("║  Total Revenue:         $%-10.2f               ║\n", totalRevenue);
+    printf("║  Average Value:         $%-10.2f               ║\n", avgValue);
+    printf("║  Highest Transaction:   $%-10.2f               ║\n", highestAmount);
+    printf("║  Lowest Transaction:    $%-10.2f               ║\n", lowestAmount);
+    printf("║  Total Units Sold:      %-10.0f                ║\n", totalUnits);
+    printf("╠═══════════════════════════════════════════════════╣\n");
+    printf("║           REVENUE BY PRODUCT                     ║\n");
+    printf("╠═══════════════════════════════════════════════════╣\n");
+
+    /*
+     * Revenue by product: collect unique product names and sum their revenue.
+     * We use a simple O(n^2) approach to find unique products.
+     */
+    char processedProducts[100][MAX_PRODUCT_NAME];
+    int numProcessed = 0;
+
+    for (int i = 0; i < count; i++) {
+        /* Check if this product has already been processed */
+        int alreadyDone = 0;
+        char lowerCurrent[MAX_PRODUCT_NAME];
+        toLowerStr(lowerCurrent, transactions[i].productName);
+
+        for (int j = 0; j < numProcessed; j++) {
+            char lowerProcessed[MAX_PRODUCT_NAME];
+            toLowerStr(lowerProcessed, processedProducts[j]);
+            if (strcmp(lowerCurrent, lowerProcessed) == 0) {
+                alreadyDone = 1;
+                break;
+            }
+        }
+
+        if (!alreadyDone && numProcessed < 100) {
+            /* Sum revenue for this product */
+            float productRevenue = 0.0f;
+            int productQty = 0;
+
+            for (int k = 0; k < count; k++) {
+                char lowerK[MAX_PRODUCT_NAME];
+                toLowerStr(lowerK, transactions[k].productName);
+                if (strcmp(lowerCurrent, lowerK) == 0) {
+                    productRevenue += transactions[k].totalAmount;
+                    productQty += transactions[k].quantitySold;
+                }
+            }
+
+            printf("║  %-20s  Qty: %-5d  Rev: $%-10.2f ║\n",
+                   transactions[i].productName, productQty, productRevenue);
+
+            strcpy(processedProducts[numProcessed], transactions[i].productName);
+            numProcessed++;
+        }
+    }
+
+    printf("╚═══════════════════════════════════════════════════╝\n");
+}
+
+/* ============================================================================
+ * File Handling
+ * ============================================================================ */
+
+/**
+ * saveTransactions - Saves all transactions to a text file.
+ * Format: one transaction per line, pipe-delimited.
