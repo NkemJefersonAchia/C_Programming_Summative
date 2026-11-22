@@ -428,3 +428,83 @@ void deleteTransaction(Transaction *transactions, int *count) {
     /* Show the transaction being deleted */
     printf("Deleting transaction:\n");
     displayTransaction(&transactions[index]);
+
+    /* Confirm deletion */
+    printf("Are you sure? (y/n): ");
+    char confirm;
+    scanf(" %c", &confirm);
+    clearInputBuffer();
+
+    if (confirm != 'y' && confirm != 'Y') {
+        printf("[Info] Deletion cancelled.\n");
+        return;
+    }
+
+    /* Shift elements left to fill the gap */
+    for (int i = index; i < *count - 1; i++) {
+        transactions[i] = transactions[i + 1];
+    }
+
+    (*count)--;
+    printf("[Success] Transaction ID %d deleted. Remaining: %d transactions.\n",
+           id, *count);
+}
+
+/* ============================================================================
+ * Sales Processing Functions (Function Pointer Demonstration)
+ *
+ * Each function below matches the SalesProcessor signature:
+ *   float function_name(Transaction *transactions, int count);
+ *
+ * These are stored in an array of function pointers and selected at runtime
+ * based on user choice — demonstrating the power of function pointers.
+ * ============================================================================ */
+
+/**
+ * calculateTotalRevenue - Sums all totalAmount values across transactions.
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
+ * @return              Total revenue (sum of all totalAmounts)
+ */
+float calculateTotalRevenue(Transaction *transactions, int count) {
+    float total = 0.0f;
+    for (int i = 0; i < count; i++) {
+        total += transactions[i].totalAmount;
+    }
+    return total;
+}
+
+/**
+ * calculateAverageValue - Computes the average totalAmount per transaction.
+ * Handles division by zero by returning 0 when count is 0.
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
+ * @return              Average totalAmount value
+ */
+float calculateAverageValue(Transaction *transactions, int count) {
+    if (count == 0) return 0.0f;  /* Avoid division by zero */
+    return calculateTotalRevenue(transactions, count) / (float)count;
+}
+
+/**
+ * findHighestTransaction - Finds and returns the highest totalAmount.
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
+ * @return              Highest totalAmount value (0 if no transactions)
+ */
+float findHighestTransaction(Transaction *transactions, int count) {
+    if (count == 0) return 0.0f;
+
+    float highest = transactions[0].totalAmount;
+    for (int i = 1; i < count; i++) {
+        if (transactions[i].totalAmount > highest) {
+            highest = transactions[i].totalAmount;
+        }
+    }
+    return highest;
+}
+
+/**
