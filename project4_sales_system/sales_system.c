@@ -183,3 +183,78 @@ int ensureCapacity(Transaction **transactions, int *capacity, int count) {
 void freeTransactions(Transaction **transactions, int *count, int *capacity) {
     if (*transactions != NULL) {
         free(*transactions);
+        *transactions = NULL;
+    }
+    *count = 0;
+    *capacity = 0;
+}
+
+/* ============================================================================
+ * CRUD Operations
+ * ============================================================================ */
+
+/**
+ * displayTransaction - Displays a single transaction in a formatted row.
+ *
+ * @param t  Pointer to the transaction to display
+ */
+void displayTransaction(const Transaction *t) {
+    printf("| %-5d | %-20s | %-8d | $%-9.2f | $%-11.2f | %-10s |\n",
+           t->transactionID, t->productName, t->quantitySold,
+           t->unitPrice, t->totalAmount, t->transactionDate);
+}
+
+/**
+ * addTransaction - Prompts user for transaction details and adds a new
+ * transaction to the array. Validates:
+ *   - Unique transaction ID (no duplicates)
+ *   - Positive quantity sold
+ *   - Positive unit price
+ * Automatically calculates totalAmount = quantitySold * unitPrice.
+ *
+ * @param transactions  Pointer to the transaction array pointer
+ * @param count         Pointer to current transaction count
+ * @param capacity      Pointer to current array capacity
+ */
+void addTransaction(Transaction **transactions, int *count, int *capacity) {
+    Transaction newTrans;
+
+    printf("\n--- Add New Transaction ---\n");
+
+    /* Get and validate Transaction ID */
+    if (!getValidInt("Enter Transaction ID: ", &newTrans.transactionID)) return;
+
+    if (newTrans.transactionID <= 0) {
+        printf("[Error] Transaction ID must be a positive integer.\n");
+        return;
+    }
+
+    /* Check for duplicate ID */
+    if (searchByID(*transactions, *count, newTrans.transactionID) != -1) {
+        printf("[Error] Transaction ID %d already exists. Duplicate IDs not allowed.\n",
+               newTrans.transactionID);
+        return;
+    }
+
+    /* Get product name */
+    printf("Enter Product Name: ");
+    if (fgets(newTrans.productName, MAX_PRODUCT_NAME, stdin) == NULL) {
+        printf("[Error] Failed to read product name.\n");
+        return;
+    }
+    /* Remove trailing newline */
+    newTrans.productName[strcspn(newTrans.productName, "\n")] = '\0';
+
+    if (strlen(newTrans.productName) == 0) {
+        printf("[Error] Product name cannot be empty.\n");
+        return;
+    }
+
+    /* Get and validate quantity */
+    if (!getValidInt("Enter Quantity Sold: ", &newTrans.quantitySold)) return;
+
+    if (newTrans.quantitySold <= 0) {
+        printf("[Error] Quantity sold must be a positive integer.\n");
+        return;
+    }
+
