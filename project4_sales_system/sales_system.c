@@ -338,3 +338,93 @@ void updateTransaction(Transaction *transactions, int count) {
 
     printf("\n--- Update Transaction ---\n");
 
+    if (!getValidInt("Enter Transaction ID to update: ", &id)) return;
+
+    index = searchByID(transactions, count, id);
+    if (index == -1) {
+        printf("[Error] Transaction ID %d not found.\n", id);
+        return;
+    }
+
+    printf("Current details:\n");
+    displayTransaction(&transactions[index]);
+
+    /* Update product name */
+    printf("\nEnter new Product Name (or press Enter to keep '%s'): ",
+           transactions[index].productName);
+    char buffer[MAX_PRODUCT_NAME];
+    if (fgets(buffer, MAX_PRODUCT_NAME, stdin) != NULL) {
+        buffer[strcspn(buffer, "\n")] = '\0';
+        if (strlen(buffer) > 0) {
+            strcpy(transactions[index].productName, buffer);
+        }
+    }
+
+    /* Update quantity */
+    printf("Enter new Quantity Sold (or 0 to keep %d): ",
+           transactions[index].quantitySold);
+    int newQty;
+    if (scanf("%d", &newQty) == 1 && newQty > 0) {
+        transactions[index].quantitySold = newQty;
+    } else if (newQty < 0) {
+        printf("[Warning] Negative quantity ignored.\n");
+    }
+    clearInputBuffer();
+
+    /* Update unit price */
+    printf("Enter new Unit Price (or 0 to keep %.2f): ",
+           transactions[index].unitPrice);
+    float newPrice;
+    if (scanf("%f", &newPrice) == 1 && newPrice > 0.0f) {
+        transactions[index].unitPrice = newPrice;
+    } else if (newPrice < 0.0f) {
+        printf("[Warning] Negative price ignored.\n");
+    }
+    clearInputBuffer();
+
+    /* Update date */
+    printf("Enter new Date (YYYY-MM-DD) (or press Enter to keep '%s'): ",
+           transactions[index].transactionDate);
+    if (fgets(buffer, MAX_DATE_LEN, stdin) != NULL) {
+        buffer[strcspn(buffer, "\n")] = '\0';
+        if (strlen(buffer) > 0) {
+            strcpy(transactions[index].transactionDate, buffer);
+        }
+    }
+
+    /* Recalculate total amount */
+    transactions[index].totalAmount =
+        (float)transactions[index].quantitySold * transactions[index].unitPrice;
+
+    printf("[Success] Transaction ID %d updated. New Total: $%.2f\n",
+           id, transactions[index].totalAmount);
+}
+
+/**
+ * deleteTransaction - Deletes a transaction by ID. Shifts remaining
+ * elements left to fill the gap. Decrements count.
+ *
+ * @param transactions  Array of transactions
+ * @param count         Pointer to current transaction count (decremented)
+ */
+void deleteTransaction(Transaction *transactions, int *count) {
+    int id, index;
+
+    if (*count == 0) {
+        printf("\n[Info] No transactions to delete.\n");
+        return;
+    }
+
+    printf("\n--- Delete Transaction ---\n");
+
+    if (!getValidInt("Enter Transaction ID to delete: ", &id)) return;
+
+    index = searchByID(transactions, *count, id);
+    if (index == -1) {
+        printf("[Error] Transaction ID %d not found.\n", id);
+        return;
+    }
+
+    /* Show the transaction being deleted */
+    printf("Deleting transaction:\n");
+    displayTransaction(&transactions[index]);
