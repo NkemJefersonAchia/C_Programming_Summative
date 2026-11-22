@@ -1,0 +1,110 @@
+/*
+ * ============================================================================
+ * Project 4: Sales Transaction Processing and Analysis System
+ * ============================================================================
+ * File:        sales_system.c
+ * Description: A comprehensive sales transaction management system in C that
+ *              demonstrates dynamic memory allocation, function pointers,
+ *              callback functions, manual searching/sorting, file I/O, and
+ *              modular program design.
+ *
+ * Key Concepts Demonstrated:
+ *   - Function Pointers (SalesProcessor): Used in menu option 5 to select
+ *     and invoke data processing functions at runtime via a function pointer
+ *     array.
+ *   - Callback Functions (TransactionFilter): Used in menu option 6 to pass
+ *     filter functions as arguments to applyFilter(), enabling flexible
+ *     and reusable filtering logic.
+ *   - Comparison Callbacks (CompareFunc): Used in sorting to decouple the
+ *     sort algorithm from the comparison logic.
+ *   - Dynamic Memory: malloc/realloc/free with capacity tracking.
+ *
+ * Author:      Nkem Jeferson Achia
+ * Date:        2026-11-21
+ * Course:      C Programming - Trimester 6
+ * ============================================================================
+ */
+
+#include "sales_system.h"
+
+/* ============================================================================
+ * Utility Functions
+ * ============================================================================ */
+
+/**
+ * clearInputBuffer - Discards remaining characters in stdin up to newline.
+ * Prevents leftover characters from affecting subsequent reads.
+ */
+void clearInputBuffer(void) {
+    int c;
+    while ((c = getchar()) != '\n' && c != EOF)
+        ;
+}
+
+/**
+ * toLowerStr - Copies src to dest, converting all characters to lowercase.
+ * Used for case-insensitive string comparisons.
+ *
+ * @param dest  Destination buffer (must be large enough)
+ * @param src   Source string
+ */
+void toLowerStr(char *dest, const char *src) {
+    int i = 0;
+    while (src[i] != '\0') {
+        dest[i] = (char)tolower((unsigned char)src[i]);
+        i++;
+    }
+    dest[i] = '\0';
+}
+
+/**
+ * getValidInt - Prompts the user and reads a valid integer.
+ *
+ * @param prompt  The prompt message to display
+ * @param value   Pointer to store the validated integer
+ * @return        1 on success, 0 on invalid input
+ */
+int getValidInt(const char *prompt, int *value) {
+    printf("%s", prompt);
+    if (scanf("%d", value) != 1) {
+        clearInputBuffer();
+        printf("[Error] Invalid input. Please enter a valid integer.\n");
+        return 0;
+    }
+    clearInputBuffer();
+    return 1;
+}
+
+/**
+ * getValidFloat - Prompts the user and reads a valid float.
+ *
+ * @param prompt  The prompt message to display
+ * @param value   Pointer to store the validated float
+ * @return        1 on success, 0 on invalid input
+ */
+int getValidFloat(const char *prompt, float *value) {
+    printf("%s", prompt);
+    if (scanf("%f", value) != 1) {
+        clearInputBuffer();
+        printf("[Error] Invalid input. Please enter a valid number.\n");
+        return 0;
+    }
+    clearInputBuffer();
+    return 1;
+}
+
+/**
+ * displayMenu - Prints the main menu options to stdout.
+ */
+void displayMenu(void) {
+    printf("\n===== SALES TRANSACTION MANAGEMENT SYSTEM =====\n");
+    printf("1.  Add New Transaction\n");
+    printf("2.  Display All Transactions\n");
+    printf("3.  Update Transaction\n");
+    printf("4.  Delete Transaction\n");
+    printf("5.  Process Sales Data\n");
+    printf("6.  Filter Transactions (Callbacks)\n");
+    printf("7.  Search Transactions\n");
+    printf("8.  Sort Transactions\n");
+    printf("9.  Generate Sales Report\n");
+    printf("10. Save Transactions\n");
