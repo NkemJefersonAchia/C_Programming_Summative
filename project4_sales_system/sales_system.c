@@ -258,3 +258,83 @@ void addTransaction(Transaction **transactions, int *count, int *capacity) {
         return;
     }
 
+    /* Get and validate unit price */
+    if (!getValidFloat("Enter Unit Price: ", &newTrans.unitPrice)) return;
+
+    if (newTrans.unitPrice <= 0.0f) {
+        printf("[Error] Unit price must be a positive value.\n");
+        return;
+    }
+
+    /* Calculate total amount */
+    newTrans.totalAmount = (float)newTrans.quantitySold * newTrans.unitPrice;
+
+    /* Get transaction date */
+    printf("Enter Transaction Date (YYYY-MM-DD): ");
+    if (fgets(newTrans.transactionDate, MAX_DATE_LEN, stdin) == NULL) {
+        printf("[Error] Failed to read date.\n");
+        return;
+    }
+    newTrans.transactionDate[strcspn(newTrans.transactionDate, "\n")] = '\0';
+
+    if (strlen(newTrans.transactionDate) == 0) {
+        printf("[Error] Transaction date cannot be empty.\n");
+        return;
+    }
+
+    /* Ensure array has capacity */
+    if (!ensureCapacity(transactions, capacity, *count)) {
+        printf("[Error] Cannot add transaction — memory allocation failed.\n");
+        return;
+    }
+
+    /* Add the transaction to the array */
+    (*transactions)[*count] = newTrans;
+    (*count)++;
+
+    printf("[Success] Transaction ID %d added. Total Amount: $%.2f\n",
+           newTrans.transactionID, newTrans.totalAmount);
+}
+
+/**
+ * displayAllTransactions - Displays all transactions in a formatted table.
+ * Shows a message if no transactions exist.
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
+ */
+void displayAllTransactions(Transaction *transactions, int count) {
+    if (count == 0) {
+        printf("\n[Info] No transactions to display.\n");
+        return;
+    }
+
+    printf("\n--- All Transactions (%d) ---\n", count);
+    printf("+-------+----------------------+----------+------------+--------------+------------+\n");
+    printf("| ID    | Product              | Quantity | Unit Price | Total Amount | Date       |\n");
+    printf("+-------+----------------------+----------+------------+--------------+------------+\n");
+
+    for (int i = 0; i < count; i++) {
+        displayTransaction(&transactions[i]);
+    }
+
+    printf("+-------+----------------------+----------+------------+--------------+------------+\n");
+}
+
+/**
+ * updateTransaction - Finds a transaction by ID and allows the user to
+ * update its fields. Recalculates totalAmount after changes.
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
+ */
+void updateTransaction(Transaction *transactions, int count) {
+    int id, index;
+
+    if (count == 0) {
+        printf("\n[Info] No transactions to update.\n");
+        return;
+    }
+
+    printf("\n--- Update Transaction ---\n");
+
