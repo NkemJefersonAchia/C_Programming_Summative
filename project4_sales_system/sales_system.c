@@ -898,3 +898,83 @@ void searchTransactionsMenu(Transaction *transactions, int count) {
             searchByAmountRange(transactions, count, minAmt, maxAmt);
             break;
         }
+        default:
+            printf("[Error] Invalid choice.\n");
+    }
+}
+
+/* ============================================================================
+ * Sorting Functions (Manual Implementation — NO qsort)
+ * Uses comparison callbacks (CompareFunc) to decouple sort logic from
+ * comparison logic.
+ * ============================================================================ */
+
+/**
+ * compareByID - Comparison callback for sorting by Transaction ID.
+ *
+ * @param a  Pointer to first transaction
+ * @param b  Pointer to second transaction
+ * @return   Negative if a < b, zero if equal, positive if a > b
+ */
+int compareByID(const Transaction *a, const Transaction *b) {
+    return a->transactionID - b->transactionID;
+}
+
+/**
+ * compareByProductName - Comparison callback for sorting by product name.
+ *
+ * @param a  Pointer to first transaction
+ * @param b  Pointer to second transaction
+ * @return   Result of strcmp on product names
+ */
+int compareByProductName(const Transaction *a, const Transaction *b) {
+    return strcmp(a->productName, b->productName);
+}
+
+/**
+ * compareByAmountAsc - Comparison callback for sorting by totalAmount ascending.
+ *
+ * @param a  Pointer to first transaction
+ * @param b  Pointer to second transaction
+ * @return   Negative if a < b, zero if equal, positive if a > b
+ */
+int compareByAmountAsc(const Transaction *a, const Transaction *b) {
+    if (a->totalAmount < b->totalAmount) return -1;
+    if (a->totalAmount > b->totalAmount) return 1;
+    return 0;
+}
+
+/**
+ * compareByAmountDesc - Comparison callback for sorting by totalAmount descending.
+ *
+ * @param a  Pointer to first transaction
+ * @param b  Pointer to second transaction
+ * @return   Positive if a < b, zero if equal, negative if a > b
+ */
+int compareByAmountDesc(const Transaction *a, const Transaction *b) {
+    if (a->totalAmount > b->totalAmount) return -1;
+    if (a->totalAmount < b->totalAmount) return 1;
+    return 0;
+}
+
+/**
+ * bubbleSort - Manual bubble sort algorithm using a CompareFunc callback.
+ *
+ * The sort algorithm is decoupled from the comparison logic: the CompareFunc
+ * callback determines the ordering, allowing the same sort function to sort
+ * by different criteria simply by passing a different comparison function.
+ *
+ * @param transactions  Array of transactions to sort
+ * @param count         Number of transactions
+ * @param cmp           Comparison callback function pointer
+ */
+void bubbleSort(Transaction *transactions, int count, CompareFunc cmp) {
+    for (int i = 0; i < count - 1; i++) {
+        int swapped = 0;
+        for (int j = 0; j < count - i - 1; j++) {
+            /* Use the comparison callback to decide ordering */
+            if (cmp(&transactions[j], &transactions[j + 1]) > 0) {
+                /* Swap transactions */
+                Transaction temp = transactions[j];
+                transactions[j] = transactions[j + 1];
+                transactions[j + 1] = temp;
