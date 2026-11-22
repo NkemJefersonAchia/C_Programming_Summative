@@ -818,3 +818,83 @@ void searchByProductName(Transaction *transactions, int count, const char *name)
  *
  * @param transactions  Array of transactions
  * @param count         Number of transactions
+ * @param minAmount     Minimum totalAmount (inclusive)
+ * @param maxAmount     Maximum totalAmount (inclusive)
+ */
+void searchByAmountRange(Transaction *transactions, int count,
+                         float minAmount, float maxAmount) {
+    int found = 0;
+
+    printf("\n--- Transactions with Amount $%.2f - $%.2f ---\n", minAmount, maxAmount);
+
+    for (int i = 0; i < count; i++) {
+        if (transactions[i].totalAmount >= minAmount &&
+            transactions[i].totalAmount <= maxAmount) {
+            displayTransaction(&transactions[i]);
+            found++;
+        }
+    }
+
+    if (found == 0) {
+        printf("[Info] No transactions found in that range.\n");
+    } else {
+        printf("[Info] Found %d transaction(s) in range.\n", found);
+    }
+}
+
+/**
+ * searchTransactionsMenu - Menu option 7: Lets user choose a search method.
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
+ */
+void searchTransactionsMenu(Transaction *transactions, int count) {
+    if (count == 0) {
+        printf("\n[Info] No transactions to search.\n");
+        return;
+    }
+
+    printf("\n--- Search Transactions ---\n");
+    printf("1. Search by Transaction ID\n");
+    printf("2. Search by Product Name (case-insensitive)\n");
+    printf("3. Search by Amount Range\n");
+
+    int choice;
+    if (!getValidInt("Enter choice: ", &choice)) return;
+
+    switch (choice) {
+        case 1: {
+            int id;
+            if (!getValidInt("Enter Transaction ID: ", &id)) return;
+            int index = searchByID(transactions, count, id);
+            if (index == -1) {
+                printf("[Info] Transaction ID %d not found.\n", id);
+            } else {
+                printf("\n--- Transaction Found ---\n");
+                displayTransaction(&transactions[index]);
+            }
+            break;
+        }
+        case 2: {
+            char name[MAX_PRODUCT_NAME];
+            printf("Enter Product Name: ");
+            if (fgets(name, MAX_PRODUCT_NAME, stdin) == NULL) return;
+            name[strcspn(name, "\n")] = '\0';
+            if (strlen(name) == 0) {
+                printf("[Error] Search term cannot be empty.\n");
+                return;
+            }
+            searchByProductName(transactions, count, name);
+            break;
+        }
+        case 3: {
+            float minAmt, maxAmt;
+            if (!getValidFloat("Enter minimum amount: $", &minAmt)) return;
+            if (!getValidFloat("Enter maximum amount: $", &maxAmt)) return;
+            if (minAmt > maxAmt) {
+                printf("[Error] Minimum must be less than or equal to maximum.\n");
+                return;
+            }
+            searchByAmountRange(transactions, count, minAmt, maxAmt);
+            break;
+        }
