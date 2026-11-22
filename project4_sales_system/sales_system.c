@@ -508,3 +508,78 @@ float findHighestTransaction(Transaction *transactions, int count) {
 }
 
 /**
+ * findLowestTransaction - Finds and returns the lowest totalAmount.
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
+ * @return              Lowest totalAmount value (0 if no transactions)
+ */
+float findLowestTransaction(Transaction *transactions, int count) {
+    if (count == 0) return 0.0f;
+
+    float lowest = transactions[0].totalAmount;
+    for (int i = 1; i < count; i++) {
+        if (transactions[i].totalAmount < lowest) {
+            lowest = transactions[i].totalAmount;
+        }
+    }
+    return lowest;
+}
+
+/**
+ * calculateTotalUnitsSold - Sums all quantitySold values.
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
+ * @return              Total units sold (as float for SalesProcessor compatibility)
+ */
+float calculateTotalUnitsSold(Transaction *transactions, int count) {
+    float totalUnits = 0.0f;
+    for (int i = 0; i < count; i++) {
+        totalUnits += (float)transactions[i].quantitySold;
+    }
+    return totalUnits;
+}
+
+/**
+ * processSalesData - Menu option 5: Demonstrates function pointers.
+ *
+ * Creates an array of SalesProcessor function pointers, lets the user choose
+ * an operation, assigns the corresponding function to a pointer variable,
+ * and calls it. This is the core function pointer demonstration.
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
+ */
+void processSalesData(Transaction *transactions, int count) {
+    if (count == 0) {
+        printf("\n[Info] No transactions to process.\n");
+        return;
+    }
+
+    /* ---- Array of function pointers ---- */
+    /* Each element is a SalesProcessor (function pointer) pointing to one of
+       our processing functions. The user's choice indexes into this array. */
+    SalesProcessor processors[] = {
+        calculateTotalRevenue,       /* Index 0 */
+        calculateAverageValue,       /* Index 1 */
+        findHighestTransaction,      /* Index 2 */
+        findLowestTransaction,       /* Index 3 */
+        calculateTotalUnitsSold      /* Index 4 */
+    };
+
+    /* Labels for display */
+    const char *labels[] = {
+        "Total Revenue",
+        "Average Transaction Value",
+        "Highest Transaction Amount",
+        "Lowest Transaction Amount",
+        "Total Units Sold"
+    };
+
+    int numProcessors = 5;
+
+    printf("\n--- Process Sales Data (Function Pointers) ---\n");
+    printf("Select a processing operation:\n");
+    for (int i = 0; i < numProcessors; i++) {
+        printf("  %d. %s\n", i + 1, labels[i]);
