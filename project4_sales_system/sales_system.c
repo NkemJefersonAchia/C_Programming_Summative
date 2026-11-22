@@ -1138,3 +1138,103 @@ void generateSalesReport(Transaction *transactions, int count) {
 /**
  * saveTransactions - Saves all transactions to a text file.
  * Format: one transaction per line, pipe-delimited.
+ *   ID|ProductName|Quantity|UnitPrice|TotalAmount|Date
+ *
+ * @param transactions  Array of transactions to save
+ * @param count         Number of transactions
+ * @param filename      Name of the output file
+ * @return              1 on success, 0 on failure
+ */
+int saveTransactions(Transaction *transactions, int count, const char *filename) {
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+        printf("[Error] Cannot open file '%s' for writing.\n", filename);
+        return 0;
+    }
+
+    /* Write header comment */
+    fprintf(file, "# Sales Transactions Data File\n");
+    fprintf(file, "# Format: ID|ProductName|Quantity|UnitPrice|TotalAmount|Date\n");
+
+    for (int i = 0; i < count; i++) {
+        fprintf(file, "%d|%s|%d|%.2f|%.2f|%s\n",
+                transactions[i].transactionID,
+                transactions[i].productName,
+                transactions[i].quantitySold,
+                transactions[i].unitPrice,
+                transactions[i].totalAmount,
+                transactions[i].transactionDate);
+    }
+
+    fclose(file);
+    printf("[Success] %d transaction(s) saved to '%s'.\n", count, filename);
+    return 1;
+}
+
+/**
+ * loadTransactions - Loads transactions from a text file into the array.
+ * Skips lines starting with '#' (comments). Dynamically expands the array
+ * as needed using ensureCapacity().
+ *
+ * @param transactions  Pointer to the transaction array pointer
+ * @param count         Pointer to transaction count (updated)
+ * @param capacity      Pointer to array capacity (updated if resized)
+ * @param filename      Name of the input file
+ * @return              Number of transactions loaded, or -1 on error
+ */
+int loadTransactions(Transaction **transactions, int *count, int *capacity,
+                     const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        /* File not found is not necessarily an error on startup */
+        return -1;
+    }
+
+    char line[512];
+    int loaded = 0;
+
+    while (fgets(line, sizeof(line), file) != NULL) {
+        /* Skip comment lines */
+        if (line[0] == '#') continue;
+
+        /* Remove trailing newline */
+        line[strcspn(line, "\n")] = '\0';
+
+        if (strlen(line) == 0) continue;
+
+        /* Ensure capacity before adding */
+        if (!ensureCapacity(transactions, capacity, *count)) {
+            printf("[Error] Memory allocation failed during load.\n");
+            fclose(file);
+            return loaded;
+        }
+
+        Transaction *t = &(*transactions)[*count];
+
+        /* Parse pipe-delimited line */
+        int parsed = sscanf(line, "%d|%99[^|]|%d|%f|%f|%19[^\n]",
+                            &t->transactionID,
+                            t->productName,
+                            &t->quantitySold,
+                            &t->unitPrice,
+                            &t->totalAmount,
+                            t->transactionDate);
+
+        if (parsed == 6) {
+            (*count)++;
+            loaded++;
+        }
+    }
+
+    fclose(file);
+    printf("[Success] %d transaction(s) loaded from '%s'.\n", loaded, filename);
+    return loaded;
+}
+
+/* ============================================================================
+ * Main Function
+ * ============================================================================ */
+
+/**
+ * main - Entry point for the Sales Transaction Management System.
+ *
