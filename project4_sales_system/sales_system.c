@@ -583,3 +583,88 @@ void processSalesData(Transaction *transactions, int count) {
     printf("Select a processing operation:\n");
     for (int i = 0; i < numProcessors; i++) {
         printf("  %d. %s\n", i + 1, labels[i]);
+    }
+
+    int choice;
+    if (!getValidInt("Enter choice (1-%d): ", &choice)) return;
+
+    if (choice < 1 || choice > numProcessors) {
+        printf("[Error] Invalid choice. Please select 1-%d.\n", numProcessors);
+        return;
+    }
+
+    /* ---- Function pointer assignment and invocation ---- */
+    /* Assign the selected function to a SalesProcessor function pointer */
+    SalesProcessor selectedProcessor = processors[choice - 1];
+
+    /* Call the function through the function pointer */
+    float result = selectedProcessor(transactions, count);
+
+    printf("\n>> %s: $%.2f\n", labels[choice - 1], result);
+}
+
+/* ============================================================================
+ * Callback / Filter Functions (Callback Demonstration)
+ *
+ * Each filter function matches the TransactionFilter signature:
+ *   int function_name(Transaction *t, void *criteria);
+ *
+ * These are passed as callbacks to applyFilter(), which iterates over all
+ * transactions and calls the callback for each one — demonstrating how
+ * callback functions enable flexible, reusable code.
+ * ============================================================================ */
+
+/**
+ * filterByMinAmount - Callback: returns 1 if the transaction's totalAmount
+ * is greater than or equal to the threshold value.
+ *
+ * @param t         Pointer to the transaction to test
+ * @param criteria  Pointer to a float threshold (cast from void*)
+ * @return          1 if totalAmount >= threshold, 0 otherwise
+ */
+int filterByMinAmount(Transaction *t, void *criteria) {
+    float threshold = *(float *)criteria;
+    return (t->totalAmount >= threshold) ? 1 : 0;
+}
+
+/**
+ * filterByProduct - Callback: returns 1 if the transaction's product name
+ * matches the given product name (case-insensitive comparison).
+ *
+ * @param t         Pointer to the transaction to test
+ * @param criteria  Pointer to a string (product name) (cast from void*)
+ * @return          1 if product names match, 0 otherwise
+ */
+int filterByProduct(Transaction *t, void *criteria) {
+    char *productName = (char *)criteria;
+
+    /* Case-insensitive comparison */
+    char lower1[MAX_PRODUCT_NAME], lower2[MAX_PRODUCT_NAME];
+    toLowerStr(lower1, t->productName);
+    toLowerStr(lower2, productName);
+
+    return (strcmp(lower1, lower2) == 0) ? 1 : 0;
+}
+
+/**
+ * countByCriteria - Counts how many transactions match a given filter callback.
+ * Demonstrates passing a callback function as a parameter.
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
+ * @param filter        Callback function to test each transaction
+ * @param criteria      Generic criteria pointer passed to the callback
+ * @return              Number of matching transactions
+ */
+int countByCriteria(Transaction *transactions, int count,
+                    TransactionFilter filter, void *criteria) {
+    int matches = 0;
+    for (int i = 0; i < count; i++) {
+        /* Call the callback function for each transaction */
+        if (filter(&transactions[i], criteria)) {
+            matches++;
+        }
+    }
+    return matches;
+}
+
