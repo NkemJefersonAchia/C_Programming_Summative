@@ -108,3 +108,78 @@ void displayMenu(void) {
     printf("8.  Sort Transactions\n");
     printf("9.  Generate Sales Report\n");
     printf("10. Save Transactions\n");
+    printf("11. Load Transactions\n");
+    printf("0.  Exit\n");
+    printf("================================================\n");
+}
+
+/* ============================================================================
+ * Dynamic Memory Management
+ * ============================================================================ */
+
+/**
+ * initTransactions - Allocates initial memory for the transaction array
+ * using malloc. Sets capacity to INITIAL_CAPACITY and count to 0.
+ *
+ * @param transactions  Pointer to the transaction array pointer
+ * @param capacity      Pointer to store allocated capacity
+ * @param count         Pointer to store transaction count (set to 0)
+ * @return              1 on success, 0 on allocation failure
+ */
+int initTransactions(Transaction **transactions, int *capacity, int *count) {
+    *capacity = INITIAL_CAPACITY;
+    *count = 0;
+
+    /* Allocate initial array using malloc */
+    *transactions = (Transaction *)malloc(sizeof(Transaction) * (*capacity));
+
+    if (*transactions == NULL) {
+        printf("[Error] Memory allocation failed! Cannot initialize transactions.\n");
+        return 0;
+    }
+
+    printf("[Info] Transaction system initialized (capacity: %d).\n", *capacity);
+    return 1;
+}
+
+/**
+ * ensureCapacity - Checks if the array is full and doubles capacity using
+ * realloc when needed. Preserves existing data.
+ *
+ * @param transactions  Pointer to the transaction array pointer
+ * @param capacity      Pointer to current capacity (updated if resized)
+ * @param count         Current number of transactions
+ * @return              1 on success, 0 on allocation failure
+ */
+int ensureCapacity(Transaction **transactions, int *capacity, int count) {
+    if (count < *capacity) {
+        return 1;  /* Still have room */
+    }
+
+    /* Double the capacity */
+    int newCapacity = (*capacity) * 2;
+    Transaction *temp = (Transaction *)realloc(*transactions,
+                                                sizeof(Transaction) * newCapacity);
+
+    if (temp == NULL) {
+        printf("[Error] Memory reallocation failed! Cannot expand array.\n");
+        return 0;
+    }
+
+    *transactions = temp;
+    *capacity = newCapacity;
+    printf("[Info] Array capacity expanded to %d.\n", newCapacity);
+    return 1;
+}
+
+/**
+ * freeTransactions - Frees the dynamically allocated transaction array
+ * and resets count and capacity to 0.
+ *
+ * @param transactions  Pointer to the transaction array pointer
+ * @param count         Pointer to count (reset to 0)
+ * @param capacity      Pointer to capacity (reset to 0)
+ */
+void freeTransactions(Transaction **transactions, int *count, int *capacity) {
+    if (*transactions != NULL) {
+        free(*transactions);
