@@ -1238,3 +1238,104 @@ int loadTransactions(Transaction **transactions, int *count, int *capacity,
 /**
  * main - Entry point for the Sales Transaction Management System.
  *
+ * Initializes the transaction array, attempts to load saved data,
+ * runs the interactive menu loop, and cleans up memory on exit.
+ */
+int main(void) {
+    Transaction *transactions = NULL;
+    int count = 0;
+    int capacity = 0;
+    int choice;
+
+    printf("╔═══════════════════════════════════════════════════╗\n");
+    printf("║  Sales Transaction Processing & Analysis System  ║\n");
+    printf("║  Demonstrating Function Pointers & Callbacks     ║\n");
+    printf("╚═══════════════════════════════════════════════════╝\n\n");
+
+    /* Initialize dynamic array */
+    if (!initTransactions(&transactions, &capacity, &count)) {
+        printf("[Fatal] Cannot initialize system. Exiting.\n");
+        return 1;
+    }
+
+    /* Attempt to load saved transactions on startup */
+    if (loadTransactions(&transactions, &count, &capacity, DATA_FILE) >= 0) {
+        printf("[Info] Data loaded from '%s'.\n", DATA_FILE);
+    } else {
+        printf("[Info] No saved data found. Starting fresh.\n");
+    }
+
+    /* ---- Main Menu Loop ---- */
+    do {
+        displayMenu();
+        if (!getValidInt("Enter your choice: ", &choice)) {
+            continue;
+        }
+
+        switch (choice) {
+            case 1:
+                addTransaction(&transactions, &count, &capacity);
+                break;
+            case 2:
+                displayAllTransactions(transactions, count);
+                break;
+            case 3:
+                updateTransaction(transactions, count);
+                break;
+            case 4:
+                deleteTransaction(transactions, &count);
+                break;
+            case 5:
+                /* Menu option 5: Function Pointer demonstration */
+                processSalesData(transactions, count);
+                break;
+            case 6:
+                /* Menu option 6: Callback Function demonstration */
+                filterTransactionsMenu(transactions, count);
+                break;
+            case 7:
+                searchTransactionsMenu(transactions, count);
+                break;
+            case 8:
+                sortTransactionsMenu(transactions, count);
+                break;
+            case 9:
+                generateSalesReport(transactions, count);
+                break;
+            case 10:
+                saveTransactions(transactions, count, DATA_FILE);
+                break;
+            case 11:
+                /* Reset and reload */
+                freeTransactions(&transactions, &count, &capacity);
+                if (!initTransactions(&transactions, &capacity, &count)) {
+                    printf("[Fatal] Cannot reinitialize. Exiting.\n");
+                    return 1;
+                }
+                if (loadTransactions(&transactions, &count, &capacity, DATA_FILE) < 0) {
+                    printf("[Info] No data file found.\n");
+                }
+                break;
+            case 0:
+                /* Save before exiting */
+                if (count > 0) {
+                    printf("\nSave transactions before exiting? (y/n): ");
+                    char save;
+                    scanf(" %c", &save);
+                    clearInputBuffer();
+                    if (save == 'y' || save == 'Y') {
+                        saveTransactions(transactions, count, DATA_FILE);
+                    }
+                }
+                printf("\n[Info] Freeing allocated memory...\n");
+                freeTransactions(&transactions, &count, &capacity);
+                printf("[Info] Goodbye!\n");
+                break;
+            default:
+                printf("[Error] Invalid choice. Please select 0-11.\n");
+        }
+
+    } while (choice != 0);
+
+    return 0;
+}
