@@ -978,3 +978,83 @@ void bubbleSort(Transaction *transactions, int count, CompareFunc cmp) {
                 Transaction temp = transactions[j];
                 transactions[j] = transactions[j + 1];
                 transactions[j + 1] = temp;
+                swapped = 1;
+            }
+        }
+        /* Optimization: stop if no swaps occurred (already sorted) */
+        if (!swapped) break;
+    }
+}
+
+/**
+ * sortTransactionsMenu - Menu option 8: Lets user choose sort criteria.
+ * Uses comparison callbacks with the bubble sort implementation.
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
+ */
+void sortTransactionsMenu(Transaction *transactions, int count) {
+    if (count == 0) {
+        printf("\n[Info] No transactions to sort.\n");
+        return;
+    }
+
+    printf("\n--- Sort Transactions ---\n");
+    printf("1. Sort by Transaction ID\n");
+    printf("2. Sort by Product Name\n");
+    printf("3. Sort by Total Amount (Ascending)\n");
+    printf("4. Sort by Total Amount (Descending)\n");
+
+    int choice;
+    if (!getValidInt("Enter choice: ", &choice)) return;
+
+    /* Select the appropriate comparison callback */
+    CompareFunc comparator = NULL;
+    const char *sortLabel = "";
+
+    switch (choice) {
+        case 1:
+            comparator = compareByID;
+            sortLabel = "Transaction ID";
+            break;
+        case 2:
+            comparator = compareByProductName;
+            sortLabel = "Product Name";
+            break;
+        case 3:
+            comparator = compareByAmountAsc;
+            sortLabel = "Total Amount (Ascending)";
+            break;
+        case 4:
+            comparator = compareByAmountDesc;
+            sortLabel = "Total Amount (Descending)";
+            break;
+        default:
+            printf("[Error] Invalid choice.\n");
+            return;
+    }
+
+    /* Sort using the selected comparison callback */
+    bubbleSort(transactions, count, comparator);
+    printf("[Success] Transactions sorted by %s.\n", sortLabel);
+
+    /* Display sorted results */
+    displayAllTransactions(transactions, count);
+}
+
+/* ============================================================================
+ * Sales Report
+ * ============================================================================ */
+
+/**
+ * generateSalesReport - Menu option 9: Generates a comprehensive sales report.
+ *
+ * Uses the SalesProcessor functions (called directly here for the report)
+ * to compute: total transactions, total revenue, average value, highest/lowest
+ * amounts, total quantity, and revenue breakdown by product.
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
+ */
+void generateSalesReport(Transaction *transactions, int count) {
+    if (count == 0) {
