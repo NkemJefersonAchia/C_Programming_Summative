@@ -668,3 +668,73 @@ int countByCriteria(Transaction *transactions, int count,
     return matches;
 }
 
+/**
+ * applyFilter - Applies a callback filter function to all transactions
+ * and displays those that match. This is the core callback demonstration:
+ * it accepts a function pointer (callback) as a parameter and invokes it
+ * for each transaction.
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
+ * @param filter        Callback function to test each transaction
+ * @param criteria      Generic criteria pointer passed to the callback
+ */
+void applyFilter(Transaction *transactions, int count,
+                 TransactionFilter filter, void *criteria) {
+    int found = 0;
+
+    printf("\n--- Filtered Results ---\n");
+    printf("+-------+----------------------+----------+------------+--------------+------------+\n");
+    printf("| ID    | Product              | Quantity | Unit Price | Total Amount | Date       |\n");
+    printf("+-------+----------------------+----------+------------+--------------+------------+\n");
+
+    for (int i = 0; i < count; i++) {
+        /* Call the callback function — this is the callback in action */
+        if (filter(&transactions[i], criteria)) {
+            displayTransaction(&transactions[i]);
+            found++;
+        }
+    }
+
+    printf("+-------+----------------------+----------+------------+--------------+------------+\n");
+
+    if (found == 0) {
+        printf("[Info] No transactions matched the filter criteria.\n");
+    } else {
+        printf("[Info] %d transaction(s) matched.\n", found);
+    }
+
+    /* Also demonstrate countByCriteria using the same callback */
+    int totalMatch = countByCriteria(transactions, count, filter, criteria);
+    printf("[Info] countByCriteria() confirms: %d matching transaction(s).\n", totalMatch);
+}
+
+/**
+ * filterTransactionsMenu - Menu option 6: Demonstrates callback functions.
+ *
+ * Lets the user choose a filter type (by minimum amount or by product name),
+ * then passes the appropriate callback function to applyFilter().
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
+ */
+void filterTransactionsMenu(Transaction *transactions, int count) {
+    if (count == 0) {
+        printf("\n[Info] No transactions to filter.\n");
+        return;
+    }
+
+    printf("\n--- Filter Transactions (Callbacks) ---\n");
+    printf("1. Filter by Minimum Amount\n");
+    printf("2. Filter by Product Name\n");
+
+    int choice;
+    if (!getValidInt("Enter choice: ", &choice)) return;
+
+    switch (choice) {
+        case 1: {
+            float threshold;
+            if (!getValidFloat("Enter minimum amount threshold: $", &threshold)) return;
+
+            /* Pass filterByMinAmount as a CALLBACK to applyFilter */
+            applyFilter(transactions, count, filterByMinAmount, &threshold);
