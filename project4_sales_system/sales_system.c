@@ -738,3 +738,83 @@ void filterTransactionsMenu(Transaction *transactions, int count) {
 
             /* Pass filterByMinAmount as a CALLBACK to applyFilter */
             applyFilter(transactions, count, filterByMinAmount, &threshold);
+            break;
+        }
+        case 2: {
+            char productName[MAX_PRODUCT_NAME];
+            printf("Enter product name to filter: ");
+            if (fgets(productName, MAX_PRODUCT_NAME, stdin) == NULL) return;
+            productName[strcspn(productName, "\n")] = '\0';
+
+            if (strlen(productName) == 0) {
+                printf("[Error] Product name cannot be empty.\n");
+                return;
+            }
+
+            /* Pass filterByProduct as a CALLBACK to applyFilter */
+            applyFilter(transactions, count, filterByProduct, productName);
+            break;
+        }
+        default:
+            printf("[Error] Invalid choice.\n");
+    }
+}
+
+/* ============================================================================
+ * Search Functions (Manual Implementation — NO bsearch)
+ * ============================================================================ */
+
+/**
+ * searchByID - Linear search for a transaction by its unique ID.
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
+ * @param id            Transaction ID to search for
+ * @return              Index of the found transaction, or -1 if not found
+ */
+int searchByID(Transaction *transactions, int count, int id) {
+    for (int i = 0; i < count; i++) {
+        if (transactions[i].transactionID == id) {
+            return i;
+        }
+    }
+    return -1;
+}
+
+/**
+ * searchByProductName - Case-insensitive search by product name.
+ * Displays all transactions whose product name contains the search term.
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
+ * @param name          Product name to search for
+ */
+void searchByProductName(Transaction *transactions, int count, const char *name) {
+    int found = 0;
+    char lowerSearch[MAX_PRODUCT_NAME], lowerProduct[MAX_PRODUCT_NAME];
+    toLowerStr(lowerSearch, name);
+
+    printf("\n--- Search Results for '%s' ---\n", name);
+
+    for (int i = 0; i < count; i++) {
+        toLowerStr(lowerProduct, transactions[i].productName);
+        /* Check if search term is contained in product name */
+        if (strstr(lowerProduct, lowerSearch) != NULL) {
+            displayTransaction(&transactions[i]);
+            found++;
+        }
+    }
+
+    if (found == 0) {
+        printf("[Info] No transactions found for product '%s'.\n", name);
+    } else {
+        printf("[Info] Found %d transaction(s).\n", found);
+    }
+}
+
+/**
+ * searchByAmountRange - Searches for transactions whose totalAmount falls
+ * within a specified range [minAmount, maxAmount].
+ *
+ * @param transactions  Array of transactions
+ * @param count         Number of transactions
