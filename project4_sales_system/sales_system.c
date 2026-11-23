@@ -978,225 +978,6 @@ int main(void) {
             continue;
         }
 
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- */
-void generateSalesReport(Transaction *transactions, int count) {
-    if (count == 0) {
-        printf("\n[Info] No transactions — cannot generate report.\n");
-        return;
-    }
-
-    printf("\n");
-    printf("╔═══════════════════════════════════════════════════╗\n");
-    printf("║           SALES ANALYSIS REPORT                  ║\n");
-    printf("╠═══════════════════════════════════════════════════╣\n");
-
-    /* Use our SalesProcessor functions */
-    float totalRevenue  = calculateTotalRevenue(transactions, count);
-    float avgValue      = calculateAverageValue(transactions, count);
-    float highestAmount = findHighestTransaction(transactions, count);
-    float lowestAmount  = findLowestTransaction(transactions, count);
-    float totalUnits    = calculateTotalUnitsSold(transactions, count);
-
-    printf("║  Total Transactions:    %-10d                ║\n", count);
-    printf("║  Total Revenue:         $%-10.2f               ║\n", totalRevenue);
-    printf("║  Average Value:         $%-10.2f               ║\n", avgValue);
-    printf("║  Highest Transaction:   $%-10.2f               ║\n", highestAmount);
-    printf("║  Lowest Transaction:    $%-10.2f               ║\n", lowestAmount);
-    printf("║  Total Units Sold:      %-10.0f                ║\n", totalUnits);
-    printf("╠═══════════════════════════════════════════════════╣\n");
-    printf("║           REVENUE BY PRODUCT                     ║\n");
-    printf("╠═══════════════════════════════════════════════════╣\n");
-
-    /*
-     * Revenue by product: collect unique product names and sum their revenue.
-     * We use a simple O(n^2) approach to find unique products.
-     */
-    char processedProducts[100][MAX_PRODUCT_NAME];
-    int numProcessed = 0;
-
-    for (int i = 0; i < count; i++) {
-        /* Check if this product has already been processed */
-        int alreadyDone = 0;
-        char lowerCurrent[MAX_PRODUCT_NAME];
-        toLowerStr(lowerCurrent, transactions[i].productName);
-
-        for (int j = 0; j < numProcessed; j++) {
-            char lowerProcessed[MAX_PRODUCT_NAME];
-            toLowerStr(lowerProcessed, processedProducts[j]);
-            if (strcmp(lowerCurrent, lowerProcessed) == 0) {
-                alreadyDone = 1;
-                break;
-            }
-        }
-
-        if (!alreadyDone && numProcessed < 100) {
-            /* Sum revenue for this product */
-            float productRevenue = 0.0f;
-            int productQty = 0;
-
-            for (int k = 0; k < count; k++) {
-                char lowerK[MAX_PRODUCT_NAME];
-                toLowerStr(lowerK, transactions[k].productName);
-                if (strcmp(lowerCurrent, lowerK) == 0) {
-                    productRevenue += transactions[k].totalAmount;
-                    productQty += transactions[k].quantitySold;
-                }
-            }
-
-            printf("║  %-20s  Qty: %-5d  Rev: $%-10.2f ║\n",
-                   transactions[i].productName, productQty, productRevenue);
-
-            strcpy(processedProducts[numProcessed], transactions[i].productName);
-            numProcessed++;
-        }
-    }
-
-    printf("╚═══════════════════════════════════════════════════╝\n");
-}
-
-/* ============================================================================
- * File Handling
- * ============================================================================ */
-
-/**
- * saveTransactions - Saves all transactions to a text file.
- * Format: one transaction per line, pipe-delimited.
- *   ID|ProductName|Quantity|UnitPrice|TotalAmount|Date
- *
- * @param transactions  Array of transactions to save
- * @param count         Number of transactions
- * @param filename      Name of the output file
- * @return              1 on success, 0 on failure
- */
-int saveTransactions(Transaction *transactions, int count, const char *filename) {
-    FILE *file = fopen(filename, "w");
-    if (file == NULL) {
-        printf("[Error] Cannot open file '%s' for writing.\n", filename);
-        return 0;
-    }
-
-    /* Write header comment */
-    fprintf(file, "# Sales Transactions Data File\n");
-    fprintf(file, "# Format: ID|ProductName|Quantity|UnitPrice|TotalAmount|Date\n");
-
-    for (int i = 0; i < count; i++) {
-        fprintf(file, "%d|%s|%d|%.2f|%.2f|%s\n",
-                transactions[i].transactionID,
-                transactions[i].productName,
-                transactions[i].quantitySold,
-                transactions[i].unitPrice,
-                transactions[i].totalAmount,
-                transactions[i].transactionDate);
-    }
-
-    fclose(file);
-    printf("[Success] %d transaction(s) saved to '%s'.\n", count, filename);
-    return 1;
-}
-
-/**
- * loadTransactions - Loads transactions from a text file into the array.
- * Skips lines starting with '#' (comments). Dynamically expands the array
- * as needed using ensureCapacity().
- *
- * @param transactions  Pointer to the transaction array pointer
- * @param count         Pointer to transaction count (updated)
- * @param capacity      Pointer to array capacity (updated if resized)
- * @param filename      Name of the input file
- * @return              Number of transactions loaded, or -1 on error
- */
-int loadTransactions(Transaction **transactions, int *count, int *capacity,
-                     const char *filename) {
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        /* File not found is not necessarily an error on startup */
-        return -1;
-    }
-
-    char line[512];
-    int loaded = 0;
-
-    while (fgets(line, sizeof(line), file) != NULL) {
-        /* Skip comment lines */
-        if (line[0] == '#') continue;
-
-        /* Remove trailing newline */
-        line[strcspn(line, "\n")] = '\0';
-
-        if (strlen(line) == 0) continue;
-
-        /* Ensure capacity before adding */
-        if (!ensureCapacity(transactions, capacity, *count)) {
-            printf("[Error] Memory allocation failed during load.\n");
-            fclose(file);
-            return loaded;
-        }
-
-        Transaction *t = &(*transactions)[*count];
-
-        /* Parse pipe-delimited line */
-        int parsed = sscanf(line, "%d|%99[^|]|%d|%f|%f|%19[^\n]",
-                            &t->transactionID,
-                            t->productName,
-                            &t->quantitySold,
-                            &t->unitPrice,
-                            &t->totalAmount,
-                            t->transactionDate);
-
-        if (parsed == 6) {
-            (*count)++;
-            loaded++;
-        }
-    }
-
-    fclose(file);
-    printf("[Success] %d transaction(s) loaded from '%s'.\n", loaded, filename);
-    return loaded;
-}
-
-/* ============================================================================
- * Main Function
- * ============================================================================ */
-
-/**
- * main - Entry point for the Sales Transaction Management System.
- *
- * Initializes the transaction array, attempts to load saved data,
- * runs the interactive menu loop, and cleans up memory on exit.
- */
-int main(void) {
-    Transaction *transactions = NULL;
-    int count = 0;
-    int capacity = 0;
-    int choice;
-
-    printf("╔═══════════════════════════════════════════════════╗\n");
-    printf("║  Sales Transaction Processing & Analysis System  ║\n");
-    printf("║  Demonstrating Function Pointers & Callbacks     ║\n");
-    printf("╚═══════════════════════════════════════════════════╝\n\n");
-
-    /* Initialize dynamic array */
-    if (!initTransactions(&transactions, &capacity, &count)) {
-        printf("[Fatal] Cannot initialize system. Exiting.\n");
-        return 1;
-    }
-
-    /* Attempt to load saved transactions on startup */
-    if (loadTransactions(&transactions, &count, &capacity, DATA_FILE) >= 0) {
-        printf("[Info] Data loaded from '%s'.\n", DATA_FILE);
-    } else {
-        printf("[Info] No saved data found. Starting fresh.\n");
-    }
-
-    /* ---- Main Menu Loop ---- */
-    do {
-        displayMenu();
-        if (!getValidInt("Enter your choice: ", &choice)) {
-            continue;
-        }
-
         switch (choice) {
             case 1:
                 addTransaction(&transactions, &count, &capacity);
@@ -1211,11 +992,11 @@ int main(void) {
                 deleteTransaction(transactions, &count);
                 break;
             case 5:
-                /* Menu option 5: Function Pointer demonstration */
+                // Menu option 5: Function Pointer demonstration
                 processSalesData(transactions, count);
                 break;
             case 6:
-                /* Menu option 6: Callback Function demonstration */
+                // Menu option 6: Callback Function demonstration
                 filterTransactionsMenu(transactions, count);
                 break;
             case 7:
@@ -1231,7 +1012,7 @@ int main(void) {
                 saveTransactions(transactions, count, DATA_FILE);
                 break;
             case 11:
-                /* Reset and reload */
+                // Reset and reload
                 freeTransactions(&transactions, &count, &capacity);
                 if (!initTransactions(&transactions, &capacity, &count)) {
                     printf("[Fatal] Cannot reinitialize. Exiting.\n");
@@ -1242,7 +1023,7 @@ int main(void) {
                 }
                 break;
             case 0:
-                /* Save before exiting */
+                // Save before exiting
                 if (count > 0) {
                     printf("\nSave transactions before exiting? (y/n): ");
                     char save;
