@@ -548,140 +548,6 @@ void filterTransactionsMenu(Transaction *transactions, int count) {
             if (!getValidFloat("Enter minimum amount threshold: $", &threshold)) return;
 
             // Pass filterByMinAmount as a CALLBACK to applyFilter
-/* ============================================================================
- * Callback / Filter Functions (Callback Demonstration)
- *
- * Each filter function matches the TransactionFilter signature:
- *   int function_name(Transaction *t, void *criteria);
- *
- * These are passed as callbacks to applyFilter(), which iterates over all
- * transactions and calls the callback for each one — demonstrating how
- * callback functions enable flexible, reusable code.
- * ============================================================================ */
-
-/**
- * filterByMinAmount - Callback: returns 1 if the transaction's totalAmount
- * is greater than or equal to the threshold value.
- *
- * @param t         Pointer to the transaction to test
- * @param criteria  Pointer to a float threshold (cast from void*)
- * @return          1 if totalAmount >= threshold, 0 otherwise
- */
-int filterByMinAmount(Transaction *t, void *criteria) {
-    float threshold = *(float *)criteria;
-    return (t->totalAmount >= threshold) ? 1 : 0;
-}
-
-/**
- * filterByProduct - Callback: returns 1 if the transaction's product name
- * matches the given product name (case-insensitive comparison).
- *
- * @param t         Pointer to the transaction to test
- * @param criteria  Pointer to a string (product name) (cast from void*)
- * @return          1 if product names match, 0 otherwise
- */
-int filterByProduct(Transaction *t, void *criteria) {
-    char *productName = (char *)criteria;
-
-    /* Case-insensitive comparison */
-    char lower1[MAX_PRODUCT_NAME], lower2[MAX_PRODUCT_NAME];
-    toLowerStr(lower1, t->productName);
-    toLowerStr(lower2, productName);
-
-    return (strcmp(lower1, lower2) == 0) ? 1 : 0;
-}
-
-/**
- * countByCriteria - Counts how many transactions match a given filter callback.
- * Demonstrates passing a callback function as a parameter.
- *
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- * @param filter        Callback function to test each transaction
- * @param criteria      Generic criteria pointer passed to the callback
- * @return              Number of matching transactions
- */
-int countByCriteria(Transaction *transactions, int count,
-                    TransactionFilter filter, void *criteria) {
-    int matches = 0;
-    for (int i = 0; i < count; i++) {
-        /* Call the callback function for each transaction */
-        if (filter(&transactions[i], criteria)) {
-            matches++;
-        }
-    }
-    return matches;
-}
-
-/**
- * applyFilter - Applies a callback filter function to all transactions
- * and displays those that match. This is the core callback demonstration:
- * it accepts a function pointer (callback) as a parameter and invokes it
- * for each transaction.
- *
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- * @param filter        Callback function to test each transaction
- * @param criteria      Generic criteria pointer passed to the callback
- */
-void applyFilter(Transaction *transactions, int count,
-                 TransactionFilter filter, void *criteria) {
-    int found = 0;
-
-    printf("\n--- Filtered Results ---\n");
-    printf("+-------+----------------------+----------+------------+--------------+------------+\n");
-    printf("| ID    | Product              | Quantity | Unit Price | Total Amount | Date       |\n");
-    printf("+-------+----------------------+----------+------------+--------------+------------+\n");
-
-    for (int i = 0; i < count; i++) {
-        /* Call the callback function — this is the callback in action */
-        if (filter(&transactions[i], criteria)) {
-            displayTransaction(&transactions[i]);
-            found++;
-        }
-    }
-
-    printf("+-------+----------------------+----------+------------+--------------+------------+\n");
-
-    if (found == 0) {
-        printf("[Info] No transactions matched the filter criteria.\n");
-    } else {
-        printf("[Info] %d transaction(s) matched.\n", found);
-    }
-
-    /* Also demonstrate countByCriteria using the same callback */
-    int totalMatch = countByCriteria(transactions, count, filter, criteria);
-    printf("[Info] countByCriteria() confirms: %d matching transaction(s).\n", totalMatch);
-}
-
-/**
- * filterTransactionsMenu - Menu option 6: Demonstrates callback functions.
- *
- * Lets the user choose a filter type (by minimum amount or by product name),
- * then passes the appropriate callback function to applyFilter().
- *
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- */
-void filterTransactionsMenu(Transaction *transactions, int count) {
-    if (count == 0) {
-        printf("\n[Info] No transactions to filter.\n");
-        return;
-    }
-
-    printf("\n--- Filter Transactions (Callbacks) ---\n");
-    printf("1. Filter by Minimum Amount\n");
-    printf("2. Filter by Product Name\n");
-
-    int choice;
-    if (!getValidInt("Enter choice: ", &choice)) return;
-
-    switch (choice) {
-        case 1: {
-            float threshold;
-            if (!getValidFloat("Enter minimum amount threshold: $", &threshold)) return;
-
-            /* Pass filterByMinAmount as a CALLBACK to applyFilter */
             applyFilter(transactions, count, filterByMinAmount, &threshold);
             break;
         }
@@ -696,7 +562,7 @@ void filterTransactionsMenu(Transaction *transactions, int count) {
                 return;
             }
 
-            /* Pass filterByProduct as a CALLBACK to applyFilter */
+            // Pass filterByProduct as a CALLBACK to applyFilter
             applyFilter(transactions, count, filterByProduct, productName);
             break;
         }
@@ -705,18 +571,9 @@ void filterTransactionsMenu(Transaction *transactions, int count) {
     }
 }
 
-/* ============================================================================
- * Search Functions (Manual Implementation — NO bsearch)
- * ============================================================================ */
+// Search Functions (Manual Implementation — NO bsearch)
 
-/**
- * searchByID - Linear search for a transaction by its unique ID.
- *
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- * @param id            Transaction ID to search for
- * @return              Index of the found transaction, or -1 if not found
- */
+// searchByID - Linear search for a transaction by its unique ID.
 int searchByID(Transaction *transactions, int count, int id) {
     for (int i = 0; i < count; i++) {
         if (transactions[i].transactionID == id) {
@@ -726,14 +583,8 @@ int searchByID(Transaction *transactions, int count, int id) {
     return -1;
 }
 
-/**
- * searchByProductName - Case-insensitive search by product name.
- * Displays all transactions whose product name contains the search term.
- *
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- * @param name          Product name to search for
- */
+// searchByProductName - Case-insensitive search by product name.
+// Displays all transactions whose product name contains the search term.
 void searchByProductName(Transaction *transactions, int count, const char *name) {
     int found = 0;
     char lowerSearch[MAX_PRODUCT_NAME], lowerProduct[MAX_PRODUCT_NAME];
@@ -743,7 +594,7 @@ void searchByProductName(Transaction *transactions, int count, const char *name)
 
     for (int i = 0; i < count; i++) {
         toLowerStr(lowerProduct, transactions[i].productName);
-        /* Check if search term is contained in product name */
+        // Check if search term is contained in product name
         if (strstr(lowerProduct, lowerSearch) != NULL) {
             displayTransaction(&transactions[i]);
             found++;
@@ -757,7 +608,146 @@ void searchByProductName(Transaction *transactions, int count, const char *name)
     }
 }
 
-/**
+// searchByAmountRange - Searches for transactions whose totalAmount falls
+// within a specified range [minAmount, maxAmount].
+void searchByAmountRange(Transaction *transactions, int count,
+                         float minAmount, float maxAmount) {
+    int found = 0;
+
+    printf("\n--- Transactions with Amount $%.2f - $%.2f ---\n", minAmount, maxAmount);
+
+    for (int i = 0; i < count; i++) {
+        if (transactions[i].totalAmount >= minAmount &&
+            transactions[i].totalAmount <= maxAmount) {
+            displayTransaction(&transactions[i]);
+            found++;
+        }
+    }
+
+    if (found == 0) {
+        printf("[Info] No transactions found in that range.\n");
+    } else {
+        printf("[Info] Found %d transaction(s) in range.\n", found);
+    }
+}
+
+// searchTransactionsMenu - Menu option 7: Lets user choose a search method.
+void searchTransactionsMenu(Transaction *transactions, int count) {
+    if (count == 0) {
+        printf("\n[Info] No transactions to search.\n");
+        return;
+    }
+
+    printf("\n--- Search Transactions ---\n");
+    printf("1. Search by Transaction ID\n");
+    printf("2. Search by Product Name (case-insensitive)\n");
+    printf("3. Search by Amount Range\n");
+
+    int choice;
+    if (!getValidInt("Enter choice: ", &choice)) return;
+
+    switch (choice) {
+        case 1: {
+            int id;
+            if (!getValidInt("Enter Transaction ID: ", &id)) return;
+            int index = searchByID(transactions, count, id);
+            if (index == -1) {
+                printf("[Info] Transaction ID %d not found.\n", id);
+            } else {
+                printf("\n--- Transaction Found ---\n");
+                displayTransaction(&transactions[index]);
+            }
+            break;
+        }
+        case 2: {
+            char name[MAX_PRODUCT_NAME];
+            printf("Enter Product Name: ");
+            if (fgets(name, MAX_PRODUCT_NAME, stdin) == NULL) return;
+            name[strcspn(name, "\n")] = '\0';
+            if (strlen(name) == 0) {
+                printf("[Error] Search term cannot be empty.\n");
+                return;
+            }
+            searchByProductName(transactions, count, name);
+            break;
+        }
+        case 3: {
+            float minAmt, maxAmt;
+            if (!getValidFloat("Enter minimum amount: $", &minAmt)) return;
+            if (!getValidFloat("Enter maximum amount: $", &maxAmt)) return;
+            if (minAmt > maxAmt) {
+                printf("[Error] Minimum must be less than or equal to maximum.\n");
+                return;
+            }
+            searchByAmountRange(transactions, count, minAmt, maxAmt);
+            break;
+        }
+        default:
+            printf("[Error] Invalid choice.\n");
+    }
+}
+
+// Sorting Functions (Manual Implementation — NO qsort)
+// Uses comparison callbacks (CompareFunc) to decouple sort logic from
+
+// compareByID - Comparison callback for sorting by Transaction ID.
+int compareByID(const Transaction *a, const Transaction *b) {
+    return a->transactionID - b->transactionID;
+}
+
+// compareByProductName - Comparison callback for sorting by product name.
+int compareByProductName(const Transaction *a, const Transaction *b) {
+    return strcmp(a->productName, b->productName);
+}
+
+// compareByAmountAsc - Comparison callback for sorting by totalAmount ascending.
+int compareByAmountAsc(const Transaction *a, const Transaction *b) {
+    if (a->totalAmount < b->totalAmount) return -1;
+    if (a->totalAmount > b->totalAmount) return 1;
+    return 0;
+}
+
+// compareByAmountDesc - Comparison callback for sorting by totalAmount descending.
+int compareByAmountDesc(const Transaction *a, const Transaction *b) {
+    if (a->totalAmount > b->totalAmount) return -1;
+    if (a->totalAmount < b->totalAmount) return 1;
+    return 0;
+}
+
+// bubbleSort - Manual bubble sort algorithm using a CompareFunc callback.
+// The sort algorithm is decoupled from the comparison logic: the CompareFunc
+void bubbleSort(Transaction *transactions, int count, CompareFunc cmp) {
+    for (int i = 0; i < count - 1; i++) {
+        int swapped = 0;
+        for (int j = 0; j < count - i - 1; j++) {
+            // Use the comparison callback to decide ordering
+            if (cmp(&transactions[j], &transactions[j + 1]) > 0) {
+                // Swap transactions
+                Transaction temp = transactions[j];
+                transactions[j] = transactions[j + 1];
+                transactions[j + 1] = temp;
+                swapped = 1;
+            }
+        }
+        // Optimization: stop if no swaps occurred (already sorted)
+        if (!swapped) break;
+    }
+}
+
+// sortTransactionsMenu - Menu option 8: Lets user choose sort criteria.
+// Uses comparison callbacks with the bubble sort implementation.
+void sortTransactionsMenu(Transaction *transactions, int count) {
+    if (count == 0) {
+        printf("\n[Info] No transactions to sort.\n");
+        return;
+    }
+
+    printf("\n--- Sort Transactions ---\n");
+    printf("1. Sort by Transaction ID\n");
+    printf("2. Sort by Product Name\n");
+    printf("3. Sort by Total Amount (Ascending)\n");
+    printf("4. Sort by Total Amount (Descending)\n");
+
  * searchByAmountRange - Searches for transactions whose totalAmount falls
  * within a specified range [minAmount, maxAmount].
  *
