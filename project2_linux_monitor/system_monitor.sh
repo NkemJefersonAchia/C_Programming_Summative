@@ -78,40 +78,37 @@ validate_threshold() {
 # Returns     : 0 if available, 1 if missing
 check_command() {
     local cmd="$1"
+    if ! command -v "${cmd}" &>/dev/null; then
+        echo -e "${YELLOW}Warning: '${cmd}' command not found. Some features may be limited.${NC}"
+        return 1
+    fi
+    return 0
 }
 
-# -----------------------------------------------------------------------------
 # print_separator()
 # Description : Prints a visual separator line for readability.
 # Parameters  : None
 # Returns     : None
-# -----------------------------------------------------------------------------
 print_separator() {
     echo -e "${CYAN}========================================================================${NC}"
 }
 
-# -----------------------------------------------------------------------------
 # press_enter()
 # Description : Pauses execution and waits for the user to press Enter.
 # Parameters  : None
 # Returns     : None
-# -----------------------------------------------------------------------------
 press_enter() {
     echo ""
     read -rp "Press [Enter] to return to the menu..."
 }
 
-# =============================================================================
 # CORE MONITORING FUNCTIONS
-# =============================================================================
 
-# -----------------------------------------------------------------------------
 # display_system_info()
 # Description : Displays general system information including hostname, OS,
-#               kernel version, uptime, and current date/time.
+# kernel version, uptime, and current date/time.
 # Parameters  : None
 # Returns     : None
-# -----------------------------------------------------------------------------
 display_system_info() {
     print_separator
     echo -e "${BOLD}${BLUE}        SYSTEM INFORMATION${NC}"
@@ -142,19 +139,16 @@ display_system_info() {
     press_enter
 }
 
-# -----------------------------------------------------------------------------
 # monitor_cpu()
 # Description : Monitors CPU utilization, displays top CPU-consuming processes,
-#               and allows the user to set a CPU usage warning threshold.
+# and allows the user to set a CPU usage warning threshold.
 # Parameters  : None
 # Returns     : None
-# -----------------------------------------------------------------------------
 monitor_cpu() {
     print_separator
     echo -e "${BOLD}${BLUE}        CPU UTILIZATION MONITOR${NC}"
     print_separator
 
-    # --- Gather CPU usage ---
     # Try 'top' first (batch mode, single iteration)
     if check_command top; then
         echo -e "${GREEN}CPU Usage Summary:${NC}"
@@ -164,10 +158,6 @@ monitor_cpu() {
             # Extract the CPU line from top
             local cpu_line
             cpu_line=$(top -bn1 2>/dev/null | grep -i "cpu(s)" | head -1)
-            if [[ -n "${cpu_line}" ]]; then
-                echo "  ${cpu_line}"
-                # Calculate usage: 100 - idle
-                local idle
                 idle=$(echo "${cpu_line}" | grep -oP '[\d.]+(?=\s*id)' 2>/dev/null)
                 if [[ -n "${idle}" ]]; then
                     local usage
