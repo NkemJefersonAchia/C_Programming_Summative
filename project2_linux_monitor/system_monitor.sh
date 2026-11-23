@@ -158,6 +158,10 @@ monitor_cpu() {
             # Extract the CPU line from top
             local cpu_line
             cpu_line=$(top -bn1 2>/dev/null | grep -i "cpu(s)" | head -1)
+            if [[ -n "${cpu_line}" ]]; then
+                echo "  ${cpu_line}"
+                # Calculate usage: 100 - idle
+                local idle
                 idle=$(echo "${cpu_line}" | grep -oP '[\d.]+(?=\s*id)' 2>/dev/null)
                 if [[ -n "${idle}" ]]; then
                     local usage
@@ -189,7 +193,6 @@ monitor_cpu() {
         echo -e "${RED}Error: Neither 'top' nor 'mpstat' is available.${NC}"
     fi
 
-    # --- Top CPU-consuming processes ---
     echo -e "${GREEN}Top 10 CPU-Consuming Processes:${NC}"
     echo -e "${BOLD}  PID     CPU%   MEM%   COMMAND${NC}"
     if check_command ps; then
@@ -203,7 +206,6 @@ monitor_cpu() {
     fi
     echo ""
 
-    # --- Allow user to set CPU threshold ---
     echo -e "${YELLOW}Current CPU warning threshold: ${CPU_THRESHOLD}%${NC}"
     read -rp "Set new CPU threshold (1-100) or press Enter to keep current: " new_threshold
 
@@ -219,19 +221,16 @@ monitor_cpu() {
     press_enter
 }
 
-# -----------------------------------------------------------------------------
 # monitor_memory()
 # Description : Monitors memory utilization, shows total/used/available memory,
-#               calculates usage percentage, and warns if above threshold.
+# calculates usage percentage, and warns if above threshold.
 # Parameters  : None
 # Returns     : None
-# -----------------------------------------------------------------------------
 monitor_memory() {
     print_separator
     echo -e "${BOLD}${BLUE}        MEMORY UTILIZATION MONITOR${NC}"
     print_separator
 
-    # --- Display memory info ---
     if check_command free; then
         echo -e "${GREEN}Memory Information:${NC}"
         free -h 2>/dev/null
@@ -259,15 +258,6 @@ monitor_memory() {
                 if [[ "${usage_pct}" -ge "${MEMORY_THRESHOLD}" ]]; then
                     echo -e "${RED}⚠  WARNING: Memory usage (${usage_pct}%) exceeds threshold (${MEMORY_THRESHOLD}%)!${NC}"
                 fi
-            fi
-        fi
-    else
-        # Fallback: try /proc/meminfo (Linux-specific)
-        if [[ -f /proc/meminfo ]]; then
-            echo -e "${GREEN}Memory Information (from /proc/meminfo):${NC}"
-            local total_kb free_kb available_kb
-            total_kb=$(grep -i "MemTotal" /proc/meminfo | awk '{print $2}')
-            free_kb=$(grep -i "MemFree" /proc/meminfo | awk '{print $2}')
             available_kb=$(grep -i "MemAvailable" /proc/meminfo | awk '{print $2}')
 
             echo "  Total:     $((total_kb / 1024)) MB"
