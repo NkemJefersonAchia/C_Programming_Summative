@@ -1,25 +1,9 @@
-Cloud computing and IoT are two technologies that complement each other perfectly.
-When IoT devices generate massive amounts of data, the cloud provides scalable storage.
-Fog computing sits between IoT endpoints and the cloud, offering localised processing.
-Companies adopting IoT solutions often start with a pilot project before scaling up.
-Smart factories rely on IoT sensors to monitor equipment health and production quality.
-An iot thermostat can learn your preferences and adjust heating schedules automatically.
-Retail stores are using IoT beacons to deliver personalised offers to shoppers' phones.
-Autonomous vehicles depend on a network of IoT sensors including cameras, lidar, and radar.
-The energy sector uses IoT for predictive maintenance of wind turbines and solar panels.
-IoT asset tracking helps logistics companies know exactly where shipments are at all times.
-Water utilities deploy iot sensors to detect leaks and monitor water quality in real time.
-Smart parking systems powered by IoT guide drivers to available spaces, reducing congestion.
-Environmental monitoring with IoT sensors tracks air quality, noise levels, and pollution.
-The adoption of IOT in healthcare has accelerated since the global pandemic.
-Wearable IoT fitness trackers collect data on steps, heart rate, sleep, and calories.
-Remote patient monitoring via IoT reduces hospital readmissions and lowers costs.
-Industrial iot protocols like MQTT and OPC-UA enable efficient machine-to-machine communication.
-Building management systems use IoT to optimise HVAC, lighting, and security.
-IoT in precision agriculture can reduce water usage by up to 30 percent.
-Smart waste management uses IoT-enabled bins that signal when they need emptying.
-The integration of blockchain with IoT can enhance data integrity and trust.
-Insurance companies are exploring IoT telematics for usage-based pricing models.
-IoT-based structural health monitoring detects cracks and stress in bridges and buildings.
-Fleet management platforms leverage iot to track vehicle location, fuel consumption, and driver behaviour.
-The future of IoT lies in seamless connectivity, robust security, and intelligent automation.
+From Mandates to Independence in Cameroon
+After the First World War, the League of Nations divided Cameroon between France and Britain.
+France governed the larger eastern part, called French Cameroon.
+Britain governed two narrow western territories, known as British Cameroons.
+In the 1950s, the UPC party led by Ruben Um Nyobe demanded independence and reunification.
+French Cameroon became independent on 1 January 1960, with Ahmadou Ahidjo as its first president.
+In February 1961, the people of the Southern Cameroons voted to join the Republic of Cameroon.
+On 1 October 1961, the two parts formed the Federal Republic of Cameroon.
+The Northern Cameroons voted to join Nigeria instead.
