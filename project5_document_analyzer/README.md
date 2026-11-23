@@ -54,7 +54,7 @@ gcc -o document_analyzer document_analyzer.c -pthread
 
 ### Examples
 
-Search for "IoT" across the three sample documents:
+Search for "Cameroon" across the three sample documents:
 
 ```bash
 ./document_analyzer "IoT" sample_document1.txt sample_document2.txt sample_document3.txt
@@ -63,13 +63,13 @@ Search for "IoT" across the three sample documents:
 Search for a different keyword:
 
 ```bash
-./document_analyzer "cloud" sample_document2.txt
+./document_analyzer "English" sample_document2.txt
 ```
 
 Search a single file:
 
 ```bash
-./document_analyzer "embedded" sample_document3.txt
+./document_analyzer "German" sample_document3.txt
 ```
 
 ## Sample Output
@@ -77,7 +77,7 @@ Search a single file:
 ```
 ===== MULTI-THREADED DOCUMENT ANALYZER =====
 
-Search Keyword: IoT
+Search Keyword: Cameroon
 Number of Input Files: 3
 
 [Thread 1] Processing sample_document1.txt ...
@@ -90,9 +90,9 @@ Number of Input Files: 3
 
 ===== PROCESSING SUMMARY =====
 
-sample_document1.txt: Completed - 27 occurrences found in 25 lines
-sample_document2.txt: Completed - 27 occurrences found in 25 lines
-sample_document3.txt: Completed - 19 occurrences found in 18 lines
+sample_document1.txt: Completed - 4 occurrences found in 4 lines
+sample_document2.txt: Completed - 9 occurrences found in 8 lines
+sample_document3.txt: Completed - 4 occurrences found in 4 lines
 
 All processing tasks completed.
 Reports generated successfully.
