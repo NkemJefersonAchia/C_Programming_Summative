@@ -177,3 +177,7 @@ gcc -Wall -Wextra -pthread -o document_analyzer project5_document_analyzer/docum
 **Nkem Jeferson Achia**
 
 November 2026
+
+## Code Style & Comments
+
+All source code is documented with concise `//` comments (and `#` for shell scripts) directly describing what each function, structure, and critical block does without excessive verbosity.
