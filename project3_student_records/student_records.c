@@ -299,30 +299,6 @@ void updateStudentInfo(Student *students, int numStudents) {
     printf("Current info: %s %s, Programme: %s, Year: %d\n",
            s->firstName, s->lastName, s->programme, s->yearOfStudy);
 
-    printf("\n--- Update Student Information ---\n");
-    if (numStudents == 0) {
-        printf("No students registered.\n");
-        return;
-    }
-
-    printf("Enter Student ID: ");
-    if (scanf("%d", &id) != 1) {
-        printf("Error: Invalid input.\n");
-        clearInputBuffer();
-        return;
-    }
-    clearInputBuffer();
-
-    index = searchByID(students, numStudents, id);
-    if (index == -1) {
-        printf("Error: Student with ID %d not found.\n", id);
-        return;
-    }
-
-    s = students + index;
-    printf("Current info: %s %s, Programme: %s, Year: %d\n",
-           s->firstName, s->lastName, s->programme, s->yearOfStudy);
-
     printf("\nWhat would you like to update?\n");
     printf("1. First Name\n");
     printf("2. Last Name\n");
@@ -372,12 +348,8 @@ void updateStudentInfo(Student *students, int numStudents) {
     }
 }
 
-/*
- * deleteStudent
- * -------------
- * Deletes a student record by ID. Frees the student's course memory,
- * shifts remaining elements, and uses realloc() to shrink the array.
- */
+// deleteStudent
+// Deletes a student record by ID. Frees the student's course memory,
 void deleteStudent(Student **students, int *numStudents) {
     int id, index, i;
     Student *temp;
@@ -407,20 +379,20 @@ void deleteStudent(Student **students, int *numStudents) {
            (*students + index)->lastName,
            (*students + index)->studentID);
 
-    /* Free the student's courses array */
+    // Free the student's courses array
     if ((*students + index)->courses != NULL) {
         free((*students + index)->courses);
         (*students + index)->courses = NULL;
     }
 
-    /* Shift remaining students left */
+    // Shift remaining students left
     for (i = index; i < *numStudents - 1; i++) {
         *(*students + i) = *(*students + i + 1);
     }
 
     (*numStudents)--;
 
-    /* Shrink the array or free if empty */
+    // Shrink the array or free if empty
     if (*numStudents == 0) {
         free(*students);
         *students = NULL;
@@ -429,23 +401,16 @@ void deleteStudent(Student **students, int *numStudents) {
         if (temp != NULL) {
             *students = temp;
         }
-        /* If realloc fails here, the old pointer is still valid */
+        // If realloc fails here, the old pointer is still valid
     }
 
     printf("Student deleted successfully.\n");
 }
 
-/* ============================================================================
- *                          COURSE OPERATIONS
- * ============================================================================ */
+// COURSE OPERATIONS
 
-/*
- * addCourseToStudent
- * ------------------
- * Adds a new course record to a specified student. Dynamically allocates
- * or expands the student's courses array using realloc().
- * Validates marks (0 to maxMarks).
- */
+// addCourseToStudent
+// Adds a new course record to a specified student. Dynamically allocates
 void addCourseToStudent(Student *students, int numStudents) {
     int id, index;
     float marks, maxMarks;
@@ -475,7 +440,7 @@ void addCourseToStudent(Student *students, int numStudents) {
 
     s = students + index;
 
-    /* Expand the courses array */
+    // Expand the courses array
     temp = (CourseRecord *)realloc(s->courses, (size_t)(s->numCourses + 1) * sizeof(CourseRecord));
     if (temp == NULL) {
         printf("Error: Memory allocation failed. Cannot add course.\n");
@@ -485,17 +450,17 @@ void addCourseToStudent(Student *students, int numStudents) {
 
     newCourse = s->courses + s->numCourses;
 
-    /* Get course code */
+    // Get course code
     printf("Enter Course Code: ");
     fgets(newCourse->courseCode, MAX_CODE_LEN, stdin);
     newCourse->courseCode[strcspn(newCourse->courseCode, "\n")] = '\0';
 
-    /* Get course name */
+    // Get course name
     printf("Enter Course Name: ");
     fgets(newCourse->courseName, MAX_COURSE_NAME, stdin);
     newCourse->courseName[strcspn(newCourse->courseName, "\n")] = '\0';
 
-    /* Get and validate max marks */
+    // Get and validate max marks
     printf("Enter Maximum Marks: ");
     if (scanf("%f", &maxMarks) != 1 || maxMarks <= 0) {
         printf("Error: Maximum marks must be a positive number.\n");
@@ -505,7 +470,7 @@ void addCourseToStudent(Student *students, int numStudents) {
     clearInputBuffer();
     newCourse->maxMarks = maxMarks;
 
-    /* Get and validate marks obtained */
+    // Get and validate marks obtained
     printf("Enter Marks Obtained (0 to %.2f): ", maxMarks);
     if (scanf("%f", &marks) != 1 || marks < 0 || marks > maxMarks) {
         printf("Error: Marks must be between 0 and %.2f.\n", maxMarks);
@@ -518,6 +483,21 @@ void addCourseToStudent(Student *students, int numStudents) {
     s->numCourses++;
     printf("Course '%s' added to student %s %s.\n",
            newCourse->courseName, s->firstName, s->lastName);
+}
+
+// updateCourseMarks
+// Updates the marks for an existing course of a specified student.
+void updateCourseMarks(Student *students, int numStudents) {
+    int id, index, i, courseChoice;
+    float newMarks;
+    Student *s;
+    CourseRecord *c;
+
+    printf("\n--- Update Course Marks ---\n");
+    if (numStudents == 0) {
+        printf("No students registered.\n");
+        return;
+    }
 }
 
 /*
