@@ -498,25 +498,6 @@ void updateCourseMarks(Student *students, int numStudents) {
         printf("No students registered.\n");
         return;
     }
-}
-
-/*
- * updateCourseMarks
- * -----------------
- * Updates the marks for an existing course of a specified student.
- * Validates that new marks are within [0, maxMarks].
- */
-void updateCourseMarks(Student *students, int numStudents) {
-    int id, index, i, courseChoice;
-    float newMarks;
-    Student *s;
-    CourseRecord *c;
-
-    printf("\n--- Update Course Marks ---\n");
-    if (numStudents == 0) {
-        printf("No students registered.\n");
-        return;
-    }
 
     printf("Enter Student ID: ");
     if (scanf("%d", &id) != 1) {
@@ -538,7 +519,7 @@ void updateCourseMarks(Student *students, int numStudents) {
         return;
     }
 
-    /* Display courses */
+    // Display courses
     printf("Courses for %s %s:\n", s->firstName, s->lastName);
     for (i = 0; i < s->numCourses; i++) {
         c = s->courses + i;
@@ -571,12 +552,8 @@ void updateCourseMarks(Student *students, int numStudents) {
     printf("Marks updated to %.2f for '%s'.\n", newMarks, c->courseName);
 }
 
-/*
- * displayAcademicPerformance
- * --------------------------
- * Displays the academic performance of a specific student, showing
- * each course's percentage and pass/fail status.
- */
+// displayAcademicPerformance
+// Displays the academic performance of a specific student, showing
 void displayAcademicPerformance(Student *students, int numStudents) {
     int id, index, i;
     Student *s;
@@ -628,16 +605,10 @@ void displayAcademicPerformance(Student *students, int numStudents) {
     printf("\nOverall Average: %.2f%%\n", calculateStudentAverage(s));
 }
 
-/* ============================================================================
- *                            SEARCHING
- * ============================================================================ */
+// SEARCHING
 
-/*
- * searchByID
- * ----------
- * Linear search for a student by ID.
- * Returns: index of the student if found, -1 otherwise.
- */
+// searchByID
+// Linear search for a student by ID.
 int searchByID(Student *students, int numStudents, int targetID) {
     int i;
     for (i = 0; i < numStudents; i++) {
@@ -648,12 +619,8 @@ int searchByID(Student *students, int numStudents, int targetID) {
     return -1;
 }
 
-/*
- * searchByName
- * ------------
- * Case-insensitive search for students whose first or last name
- * contains the given search string. Displays all matches.
- */
+// searchByName
+// Case-insensitive search for students whose first or last name
 void searchByName(Student *students, int numStudents, const char *name) {
     int i, found = 0;
     char lowerSearch[MAX_NAME_LEN];
@@ -681,12 +648,8 @@ void searchByName(Student *students, int numStudents, const char *name) {
     }
 }
 
-/*
- * searchByProgramme
- * -----------------
- * Case-insensitive search for students in a given programme.
- * Displays all matches.
- */
+// searchByProgramme
+// Case-insensitive search for students in a given programme.
 void searchByProgramme(Student *students, int numStudents, const char *programme) {
     int i, found = 0;
     char lowerSearch[MAX_PROGRAMME_LEN];
@@ -708,6 +671,33 @@ void searchByProgramme(Student *students, int numStudents, const char *programme
         printf("No students found in programme '%s'.\n", programme);
     } else {
         printf("Found %d student(s).\n", found);
+    }
+}
+
+// searchStudents
+// Presents a sub-menu for choosing the search type, then performs
+void searchStudents(Student *students, int numStudents) {
+    int choice, id, index;
+    char searchTerm[MAX_PROGRAMME_LEN];
+
+    printf("\n--- Search Students ---\n");
+    if (numStudents == 0) {
+        printf("No students registered.\n");
+        return;
+    }
+
+    printf("Search by:\n");
+    printf("1. Student ID\n");
+    printf("2. Name (first or last)\n");
+    printf("3. Programme\n");
+    printf("Choice: ");
+    if (scanf("%d", &choice) != 1) {
+        printf("Error: Invalid input.\n");
+        clearInputBuffer();
+        return;
+    }
+    clearInputBuffer();
+
     }
 }
 
