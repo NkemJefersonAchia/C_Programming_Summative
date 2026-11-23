@@ -518,13 +518,13 @@ terminate_process() {
 # Description : Generates a comprehensive system health report containing
 # CPU, memory, disk, and uptime information. Saves to a
 # user-specified directory with a timestamp in the filename.
-# -----------------------------------------------------------------------------
+# Parameters  : None
+# Returns     : None
 generate_report() {
     print_separator
     echo -e "${BOLD}${BLUE}        GENERATE SYSTEM HEALTH REPORT${NC}"
     print_separator
 
-    # --- Ask user for the output directory ---
     read -rp "Enter directory to save the report (or press Enter for current directory): " report_dir
 
     # Default to current directory if empty
@@ -532,7 +532,6 @@ generate_report() {
         report_dir="."
     fi
 
-    # --- Validate directory ---
     if [[ ! -d "${report_dir}" ]]; then
         echo -e "${YELLOW}Directory '${report_dir}' does not exist. Create it? (y/n): ${NC}"
         read -r create_dir
@@ -559,7 +558,6 @@ generate_report() {
         return
     fi
 
-    # --- Generate the report ---
     local timestamp
     timestamp="$(date '+%Y%m%d_%H%M%S')"
     local report_file="${report_dir}/system_health_report_${timestamp}.txt"
@@ -625,13 +623,11 @@ generate_report() {
     press_enter
 }
 
-# -----------------------------------------------------------------------------
 # view_activity_log()
 # Description : Displays the contents of the activity log file. If the log
-#               does not exist or is empty, informs the user.
+# does not exist or is empty, informs the user.
 # Parameters  : None
 # Returns     : None
-# -----------------------------------------------------------------------------
 view_activity_log() {
     print_separator
     echo -e "${BOLD}${BLUE}        ACTIVITY HISTORY${NC}"
@@ -650,12 +646,10 @@ view_activity_log() {
     press_enter
 }
 
-# -----------------------------------------------------------------------------
 # clear_activity_log()
 # Description : Clears the activity log file after user confirmation.
 # Parameters  : None
 # Returns     : None
-# -----------------------------------------------------------------------------
 clear_activity_log() {
     print_separator
     echo -e "${BOLD}${BLUE}        CLEAR ACTIVITY LOG${NC}"
@@ -696,16 +690,12 @@ clear_activity_log() {
     press_enter
 }
 
-# =============================================================================
 # MENU FUNCTIONS
-# =============================================================================
 
-# -----------------------------------------------------------------------------
 # show_menu()
 # Description : Displays the interactive main menu with all available options.
 # Parameters  : None
 # Returns     : None
-# -----------------------------------------------------------------------------
 show_menu() {
     clear
     echo ""
@@ -728,17 +718,13 @@ show_menu() {
     echo ""
 }
 
-# =============================================================================
 # MAIN FUNCTION
-# =============================================================================
 
-# -----------------------------------------------------------------------------
 # main()
 # Description : Entry point of the script. Runs the main menu loop, reads user
-#               input, validates it, and dispatches to the appropriate function.
+# input, validates it, and dispatches to the appropriate function.
 # Parameters  : None
 # Returns     : None
-# -----------------------------------------------------------------------------
 main() {
     # Log script startup
     log_activity "System Monitor started"
@@ -791,7 +777,5 @@ main() {
     done
 }
 
-# =============================================================================
 # SCRIPT EXECUTION — call main()
-# =============================================================================
 main
