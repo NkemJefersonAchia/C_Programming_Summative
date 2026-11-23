@@ -8,11 +8,12 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <strings.h>   // strncasecmp()
 #include <ctype.h>
 #include <pthread.h>
 
 // ============================== Constants =================================
-#define MAX_LINE_LENGTH  1024   // Maximum length of a single line in a file
+#define MAX_LINE_LENGTH  1024   // Initial line buffer hint (lines of any length are supported)
 #define MAX_FILES        100    // Maximum number of input files supported
 #define INITIAL_MATCH_CAP 256   // Initial capacity for matching line numbers
 
@@ -23,8 +24,9 @@
 
 // ========================= Data Structures ================================
 
-// ThreadArgs — Holds all data a worker thread needs to process one file.
-// Each thread receives a pointer to its own ThreadArgs instance. The struct
+// ThreadArgs: holds all data a worker thread needs to process one file.
+// Each thread receives a pointer to its own ThreadArgs instance, so no
+// data is shared between threads and no synchronization is required.
 typedef struct {
     char inputFilename[256];       // Path to the document to be searched
     char keyword[100];             // Keyword to search for (case-insensitive)
@@ -35,34 +37,32 @@ typedef struct {
     int *matchingLineNumbers;      // Dynamically allocated array of line nums
     int  maxMatchingLines;         // Current capacity of matchingLineNumbers
     int  status;                   // 0=pending, 1=success, -1=error
-    char errorMessage[256];        // Descriptive error message (if any)
+    char errorMessage[512];        // Descriptive error message (if any)
 } ThreadArgs;
 
 // ========================= Function Prototypes ============================
 
-// initThreadArgs — Initialise a ThreadArgs struct with default values.
+// Initialise a ThreadArgs struct with default values.
 void initThreadArgs(ThreadArgs *args, const char *filename,
                     const char *keyword, int threadID);
 
-// processFile — Thread entry point. Searches a file for the keyword.
-// Opens the file specified in ThreadArgs, reads it line-by-line, counts
+// Thread entry point. Opens the file in ThreadArgs, reads it line by line,
+// counts keyword occurrences, records matching lines and writes the report.
 void *processFile(void *arg);
 
-// searchLine — Count case-insensitive occurrences of keyword in a line.
+// Count case-insensitive occurrences of keyword in a line.
 int searchLine(const char *line, const char *keyword);
 
-// generateReport — Write an analysis report file for one thread's results.
-// Creates a file named <inputFilename>_report.txt containing the search
+// Write <inputFilename without extension>_report.txt for one thread's results.
 int generateReport(const ThreadArgs *args);
 
-// displaySummary — Print the final processing summary to the terminal.
-// Shows per-file results (occurrences and matching lines) and an overall
+// Print the final processing summary to the terminal.
 void displaySummary(ThreadArgs *allArgs[], int numFiles);
 
-// cleanupThreadArgs — Free dynamically allocated memory in a ThreadArgs.
+// Free dynamically allocated memory in a ThreadArgs.
 void cleanupThreadArgs(ThreadArgs *args);
 
-// printUsage — Print usage information to stderr.
+// Print usage information to stderr.
 void printUsage(const char *programName);
 
 #endif // DOCUMENT_ANALYZER_H
