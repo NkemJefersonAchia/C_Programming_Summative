@@ -258,6 +258,15 @@ monitor_memory() {
                 if [[ "${usage_pct}" -ge "${MEMORY_THRESHOLD}" ]]; then
                     echo -e "${RED}⚠  WARNING: Memory usage (${usage_pct}%) exceeds threshold (${MEMORY_THRESHOLD}%)!${NC}"
                 fi
+            fi
+        fi
+    else
+        # Fallback: try /proc/meminfo (Linux-specific)
+        if [[ -f /proc/meminfo ]]; then
+            echo -e "${GREEN}Memory Information (from /proc/meminfo):${NC}"
+            local total_kb free_kb available_kb
+            total_kb=$(grep -i "MemTotal" /proc/meminfo | awk '{print $2}')
+            free_kb=$(grep -i "MemFree" /proc/meminfo | awk '{print $2}')
             available_kb=$(grep -i "MemAvailable" /proc/meminfo | awk '{print $2}')
 
             echo "  Total:     $((total_kb / 1024)) MB"
@@ -278,7 +287,6 @@ monitor_memory() {
     fi
     echo ""
 
-    # --- Allow user to set memory threshold ---
     echo -e "${YELLOW}Current memory warning threshold: ${MEMORY_THRESHOLD}%${NC}"
     read -rp "Set new memory threshold (1-100) or press Enter to keep current: " new_threshold
 
@@ -294,25 +302,21 @@ monitor_memory() {
     press_enter
 }
 
-# -----------------------------------------------------------------------------
 # monitor_disk()
 # Description : Monitors disk utilization, shows filesystem usage, identifies
-#               filesystems near capacity, and allows threshold configuration.
+# filesystems near capacity, and allows threshold configuration.
 # Parameters  : None
 # Returns     : None
-# -----------------------------------------------------------------------------
 monitor_disk() {
     print_separator
     echo -e "${BOLD}${BLUE}        DISK UTILIZATION MONITOR${NC}"
     print_separator
 
-    # --- Display disk space ---
     if check_command df; then
         echo -e "${GREEN}Disk Space Usage:${NC}"
         df -h 2>/dev/null
         echo ""
 
-        # --- Identify filesystems near or above threshold ---
         echo -e "${GREEN}Filesystems at or above ${DISK_THRESHOLD}% capacity:${NC}"
         local found_warning=false
 
@@ -342,7 +346,6 @@ monitor_disk() {
     fi
     echo ""
 
-    # --- Allow user to set disk threshold ---
     echo -e "${YELLOW}Current disk usage warning threshold: ${DISK_THRESHOLD}%${NC}"
     read -rp "Set new disk threshold (1-100) or press Enter to keep current: " new_threshold
 
@@ -358,13 +361,11 @@ monitor_disk() {
     press_enter
 }
 
-# -----------------------------------------------------------------------------
 # search_processes()
 # Description : Lists running processes and allows user to search by name
-#               or PID. Displays PID, CPU%, MEM%, and command information.
+# or PID. Displays PID, CPU%, MEM%, and command information.
 # Parameters  : None
 # Returns     : None
-# -----------------------------------------------------------------------------
 search_processes() {
     print_separator
     echo -e "${BOLD}${BLUE}        VIEW AND SEARCH RUNNING PROCESSES${NC}"
@@ -377,12 +378,6 @@ search_processes() {
         return
     fi
 
-    echo "Options:"
-    echo "  1) List all running processes"
-    echo "  2) Search by process name"
-    echo "  3) Search by PID"
-    echo ""
-    read -rp "Select an option (1-3): " search_option
 
     case "${search_option}" in
         1)
