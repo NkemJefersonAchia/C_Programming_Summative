@@ -378,6 +378,12 @@ search_processes() {
         return
     fi
 
+    echo "Options:"
+    echo "  1) List all running processes"
+    echo "  2) Search by process name"
+    echo "  3) Search by PID"
+    echo ""
+    read -rp "Select an option (1-3): " search_option
 
     case "${search_option}" in
         1)
@@ -438,14 +444,12 @@ search_processes() {
     press_enter
 }
 
-# -----------------------------------------------------------------------------
 # terminate_process()
 # Description : Terminates a process by PID after user confirmation. Protects
-#               system-critical processes (PID < 100) and handles permission
-#               errors gracefully.
+# system-critical processes (PID < 100) and handles permission
+# errors gracefully.
 # Parameters  : None
 # Returns     : None
-# -----------------------------------------------------------------------------
 terminate_process() {
     print_separator
     echo -e "${BOLD}${BLUE}        TERMINATE A PROCESS${NC}"
@@ -460,7 +464,6 @@ terminate_process() {
 
     read -rp "Enter the PID of the process to terminate: " target_pid
 
-    # --- Validate PID input ---
     if [[ -z "${target_pid}" ]]; then
         echo -e "${RED}Error: PID cannot be empty.${NC}"
         press_enter
@@ -473,7 +476,6 @@ terminate_process() {
         return
     fi
 
-    # --- Protect system-critical processes ---
     if [[ "${target_pid}" -lt 100 ]]; then
         echo -e "${RED}Error: Cannot terminate system-critical process (PID < 100).${NC}"
         echo -e "${RED}PIDs below 100 are reserved for essential system processes.${NC}"
@@ -482,19 +484,16 @@ terminate_process() {
         return
     fi
 
-    # --- Check if the process exists ---
     if ! ps -p "${target_pid}" &>/dev/null; then
         echo -e "${RED}Error: No process found with PID ${target_pid}.${NC}"
         press_enter
         return
     fi
 
-    # --- Show process details before killing ---
     echo -e "${GREEN}Process details:${NC}"
     ps -p "${target_pid}" -o pid,user,%cpu,%mem,comm 2>/dev/null
     echo ""
 
-    # --- Confirm with the user ---
     read -rp "Are you sure you want to terminate PID ${target_pid}? (y/n): " confirm
     if [[ "${confirm}" != "y" && "${confirm}" != "Y" ]]; then
         echo -e "${YELLOW}Process termination cancelled.${NC}"
@@ -503,7 +502,6 @@ terminate_process() {
         return
     fi
 
-    # --- Attempt to kill the process ---
     if kill "${target_pid}" 2>/dev/null; then
         echo -e "${GREEN}✓ Process ${target_pid} has been terminated successfully.${NC}"
         log_activity "Terminated process PID ${target_pid}"
@@ -516,13 +514,10 @@ terminate_process() {
     press_enter
 }
 
-# -----------------------------------------------------------------------------
 # generate_report()
 # Description : Generates a comprehensive system health report containing
-#               CPU, memory, disk, and uptime information. Saves to a
-#               user-specified directory with a timestamp in the filename.
-# Parameters  : None
-# Returns     : None
+# CPU, memory, disk, and uptime information. Saves to a
+# user-specified directory with a timestamp in the filename.
 # -----------------------------------------------------------------------------
 generate_report() {
     print_separator
