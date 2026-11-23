@@ -1,0 +1,26 @@
+# Compiled binaries
+*.o
+*.out
+*.dSYM
+student_records
+sales_system
+document_analyzer
+
+# Data files generated at runtime
+students_data.txt
+transactions.txt
+activity_log.txt
+*_report.txt
+system_health_report_*.txt
+
+# Documentation & Report drafts (submitted separately)
+*.docx
+*.pdf
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
