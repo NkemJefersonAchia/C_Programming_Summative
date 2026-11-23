@@ -238,3 +238,73 @@ int generateReport(const ThreadArgs *args)
             if (i > 0) fprintf(fp, ", ");
             fprintf(fp, "%d", args->matchingLineNumbers[i]);
         }
+        fprintf(fp, "\n");
+    } else {
+        fprintf(fp, "None\n");
+    }
+
+    /* Processing status */
+    fprintf(fp, "\n------------------------------------------------------------\n");
+    fprintf(fp, "Processing Status:     %s\n",
+            (args->status == STATUS_ERROR) ? "Failed" : "Success");
+
+    if (args->status == STATUS_ERROR && args->errorMessage[0] != '\0') {
+        fprintf(fp, "Error Details:         %s\n", args->errorMessage);
+    }
+
+    fprintf(fp, "============================================================\n");
+
+    fclose(fp);
+    return 0;
+}
+
+/* ============================ displaySummary ============================== */
+
+/**
+ * displaySummary — Print the final processing summary to stdout.
+ *
+ * Shows per-file results including occurrence count and matching lines,
+ * or an error message for files that failed.
+ */
+void displaySummary(ThreadArgs *allArgs[], int numFiles)
+{
+    printf("\n===== PROCESSING SUMMARY =====\n\n");
+
+    for (int i = 0; i < numFiles; i++) {
+        if (allArgs[i]->status == STATUS_SUCCESS) {
+            printf("%s: Completed - %d occurrences found in %d lines\n",
+                   allArgs[i]->inputFilename,
+                   allArgs[i]->keywordCount,
+                   allArgs[i]->matchingLines);
+        } else if (allArgs[i]->status == STATUS_ERROR) {
+            printf("%s: Failed - %s\n",
+                   allArgs[i]->inputFilename,
+                   allArgs[i]->errorMessage);
+        } else {
+            printf("%s: Status unknown (pending)\n",
+                   allArgs[i]->inputFilename);
+        }
+    }
+
+    printf("\nAll processing tasks completed.\n");
+    printf("Reports generated successfully.\n");
+}
+
+/* =========================== cleanupThreadArgs ============================ */
+
+/**
+ * cleanupThreadArgs — Free dynamically allocated memory in a ThreadArgs.
+ *
+ * Releases the matchingLineNumbers array and sets the pointer to NULL
+ * to prevent double-free errors.
+ */
+void cleanupThreadArgs(ThreadArgs *args)
+{
+    if (args && args->matchingLineNumbers) {
+        free(args->matchingLineNumbers);
+        args->matchingLineNumbers = NULL;
+        args->maxMatchingLines = 0;
+    }
+}
+
+/* =============================== printUsage =============================== */
