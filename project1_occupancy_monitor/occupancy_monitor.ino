@@ -1,29 +1,28 @@
 // Smart Occupancy Monitoring and Access Control System
 // Author: Nkem Jeferson Achia
 
-#include <LiquidCrystal.h>
+#include <Wire.h>
+#include <LiquidCrystal_I2C.h>
 #include <stdlib.h>
 
-// Pin Definitions
+// Pin definitions
 #define ENTRY_BUTTON_PIN  2   // Push button for entry (digital pin 2)
 #define EXIT_BUTTON_PIN   3   // Push button for exit  (digital pin 3)
-#define LCD_RS_PIN       12   // LCD Register Select pin
-#define LCD_EN_PIN       11   // LCD Enable pin
-#define LCD_D4_PIN        7   // LCD Data pin 4
-#define LCD_D5_PIN        6   // LCD Data pin 5
-#define LCD_D6_PIN        5   // LCD Data pin 6
-#define LCD_D7_PIN        4   // LCD Data pin 7
 #define GREEN_LED_PIN     8   // Green LED — capacity available
 #define RED_LED_PIN       9   // Red LED   — at maximum capacity
 
-// System Constants
-#define MAX_CAPACITY       10  // Maximum number of people allowed in the room
-#define DEBOUNCE_DELAY    200  // Button debounce interval in milliseconds
+// I2C LCD configuration (SDA connects to A4, SCL connects to A5 on Arduino Uno)
+#define I2C_LCD_ADDR      0x27 // Default I2C address (0x20, 0x27 or 0x3F in Tinkercad)
+#define LCD_COLS          16   // 16 columns
+#define LCD_ROWS          2    // 2 rows
+
+// System constants
+#define MAX_CAPACITY        10  // Maximum number of people allowed in room
+#define DEBOUNCE_DELAY     200  // Button debounce interval in milliseconds
 #define LCD_UPDATE_INTERVAL 500 // LCD refresh interval in milliseconds
-#define SERIAL_BAUD_RATE 9600  // Serial communication baud rate
+#define SERIAL_BAUD_RATE  9600  // Serial communication baud rate
 
-// Data Structures
-
+// Structure to organize occupancy data
 typedef struct {
     int currentCount;
     int maxCapacity;
@@ -31,25 +30,22 @@ typedef struct {
     unsigned long totalExits;
 } OccupancyInfo;
 
-// Global Variables
+// Create I2C LCD object
+LiquidCrystal_I2C lcd(I2C_LCD_ADDR, LCD_COLS, LCD_ROWS);
 
-// LCD object: RS, EN, D4, D5, D6, D7
-LiquidCrystal lcd(LCD_RS_PIN, LCD_EN_PIN, LCD_D4_PIN, LCD_D5_PIN,
-                   LCD_D6_PIN, LCD_D7_PIN);
-
-// Pointer to dynamically allocated OccupancyInfo struct
+// Pointer to dynamically allocated occupancy structure
 OccupancyInfo* pOccupancy = NULL;
 
-// Timing variables for non-blocking debounce (millis-based)
-unsigned long lastEntryPressTime = 0;  // Last valid entry button press time
-unsigned long lastExitPressTime  = 0;  // Last valid exit button press time
+// Timing variables for non-blocking debounce and LCD refresh
+unsigned long lastEntryPressTime = 0;  // Last valid entry press time
+unsigned long lastExitPressTime  = 0;  // Last valid exit press time
 unsigned long lastLCDUpdateTime  = 0;  // Last LCD refresh time
 
-// Previous button states for edge detection
-int prevEntryState = HIGH;  // Previous reading of entry button (pull-up)
-int prevExitState  = HIGH;  // Previous reading of exit button  (pull-up)
+// Previous button readings for edge detection
+int prevEntryState = HIGH;  // Previous state of entry button (pull-up)
+int prevExitState  = HIGH;  // Previous state of exit button  (pull-up)
 
-// Function Prototypes
+// Function prototypes
 void initSystem(void);
 void handleEntry(OccupancyInfo* pOcc);
 void handleExit(OccupancyInfo* pOcc);
@@ -60,25 +56,24 @@ void printError(const char* errorMsg);
 void cleanupSystem(void);
 String getTimestamp(void);
 
-// setup() — Arduino entry point. Initialises hardware and allocates memory.
+// Setup hardware and allocate memory
 void setup() {
     initSystem();
 }
 
-// loop() — Main program loop. Reads buttons, updates outputs. No delay().
+// Main loop: non-blocking button checking and periodic display refresh
 void loop() {
-    // Safety check: if allocation failed, do nothing
     if (pOccupancy == NULL) {
         return;
     }
 
     unsigned long currentMillis = millis();
 
-    // --- Read button states (active LOW with INPUT_PULLUP) ---
+    // Read button states (active LOW with INPUT_PULLUP)
     int entryReading = digitalRead(ENTRY_BUTTON_PIN);
     int exitReading  = digitalRead(EXIT_BUTTON_PIN);
 
-    // --- Entry button: detect falling edge with debounce ---
+    // Entry button press detection with millis() debounce
     if (entryReading == LOW && prevEntryState == HIGH) {
         if ((currentMillis - lastEntryPressTime) >= DEBOUNCE_DELAY) {
             handleEntry(pOccupancy);
@@ -87,7 +82,7 @@ void loop() {
     }
     prevEntryState = entryReading;
 
-    // --- Exit button: detect falling edge with debounce ---
+    // Exit button press detection with millis() debounce
     if (exitReading == LOW && prevExitState == HIGH) {
         if ((currentMillis - lastExitPressTime) >= DEBOUNCE_DELAY) {
             handleExit(pOccupancy);
@@ -96,59 +91,59 @@ void loop() {
     }
     prevExitState = exitReading;
 
-    // --- Periodically refresh the LCD (every LCD_UPDATE_INTERVAL ms) ---
+    // Refresh LCD every 500 ms without blocking
     if ((currentMillis - lastLCDUpdateTime) >= LCD_UPDATE_INTERVAL) {
         updateLCD(pOccupancy);
         lastLCDUpdateTime = currentMillis;
     }
 
-    // --- Continuously update LEDs to reflect current state ---
+    // Continuously update LED indicators
     updateLEDs(pOccupancy);
 }
 
-// initSystem() — Initialise all peripherals and allocate occupancy struct.
-// Configures pin modes, starts Serial and LCD, dynamically allocates the
+// Initialize GPIO pins, I2C LCD, Serial, and allocate heap memory
 void initSystem(void) {
-    // Configure button pins with internal pull-up resistors
+    // Configure buttons with internal pull-up resistors
     pinMode(ENTRY_BUTTON_PIN, INPUT_PULLUP);
     pinMode(EXIT_BUTTON_PIN,  INPUT_PULLUP);
 
-    // Configure LED pins as outputs
+    // Configure LED output pins
     pinMode(GREEN_LED_PIN, OUTPUT);
     pinMode(RED_LED_PIN,   OUTPUT);
 
-    // Start serial communication
+    // Start Serial communication
     Serial.begin(SERIAL_BAUD_RATE);
 
-    // Initialise the 16x2 LCD
-    lcd.begin(16, 2);
+    // Initialize I2C bus and LCD screen
+    Wire.begin();
+    lcd.init();
+    lcd.backlight();
 
-    // --- Dynamically allocate the OccupancyInfo struct ---
+    // Dynamically allocate memory for OccupancyInfo struct
     pOccupancy = (OccupancyInfo*)malloc(sizeof(OccupancyInfo));
 
-    // Validate allocation
+    // Validate memory allocation
     if (pOccupancy == NULL) {
-        Serial.println(F("ERROR: malloc() failed — unable to allocate OccupancyInfo!"));
+        Serial.println(F("ERROR: malloc() failed — unable to allocate memory!"));
         lcd.clear();
         lcd.setCursor(0, 0);
         lcd.print("MEMORY ERROR!");
         lcd.setCursor(0, 1);
         lcd.print("System halted.");
-        // Turn both LEDs on to signal fault
         digitalWrite(GREEN_LED_PIN, HIGH);
         digitalWrite(RED_LED_PIN, HIGH);
-        return;  // loop() will check for NULL and skip
+        return;
     }
 
-    // Initialise struct fields via pointer
+    // Initialize structure fields via pointer
     pOccupancy->currentCount  = 0;
     pOccupancy->maxCapacity   = MAX_CAPACITY;
     pOccupancy->totalEntries  = 0;
     pOccupancy->totalExits    = 0;
 
-    // Print startup banner to Serial Monitor
+    // Print startup message to Serial Monitor
     Serial.println(F("============================================================"));
-    Serial.println(F("  Smart Occupancy Monitoring and Access Control System"));
+    Serial.println(F("  Smart Occupancy Monitoring and Access Control System (I2C)"));
     Serial.println(F("============================================================"));
     Serial.print(F("  Max Capacity : "));
     Serial.println(MAX_CAPACITY);
@@ -157,19 +152,19 @@ void initSystem(void) {
     Serial.println(F("============================================================"));
     Serial.println();
 
-    // Initial display update
+    // Initial display and LED update
     updateLCD(pOccupancy);
     updateLEDs(pOccupancy);
 }
 
-// handleEntry() — Process an entry event.
+// Process entry event: increment count if below max capacity
 void handleEntry(OccupancyInfo* pOcc) {
     if (pOcc->currentCount < pOcc->maxCapacity) {
         pOcc->currentCount++;
         pOcc->totalEntries++;
         printStatus(pOcc, "ENTRY");
     } else {
-        // Room is full — reject entry
+        // Reject entry when facility is at maximum capacity
         Serial.print("[");
         Serial.print(getTimestamp());
         Serial.print("] ");
@@ -182,14 +177,14 @@ void handleEntry(OccupancyInfo* pOcc) {
     }
 }
 
-// handleExit() — Process an exit event.
+// Process exit event: decrement count if above zero
 void handleExit(OccupancyInfo* pOcc) {
     if (pOcc->currentCount > 0) {
         pOcc->currentCount--;
         pOcc->totalExits++;
         printStatus(pOcc, "EXIT");
     } else {
-        // Room is empty — reject exit
+        // Reject exit when room is already empty
         Serial.print("[");
         Serial.print(getTimestamp());
         Serial.print("] ");
@@ -202,39 +197,39 @@ void handleExit(OccupancyInfo* pOcc) {
     }
 }
 
-// updateLCD() — Refresh the 16x2 LCD with current occupancy data.
+// Update 16x2 I2C LCD with current people count and available capacity
 void updateLCD(OccupancyInfo* pOcc) {
     int available = pOcc->maxCapacity - pOcc->currentCount;
 
-    // Line 1: People count
+    // Line 1: current occupancy count
     lcd.setCursor(0, 0);
-    lcd.print("People:    ");      // Pad to clear previous digits
+    lcd.print("People:    ");
     lcd.setCursor(8, 0);
     lcd.print(pOcc->currentCount);
-    lcd.print("   ");              // Clear trailing characters
+    lcd.print("   ");
 
-    // Line 2: Available spots
+    // Line 2: remaining available capacity
     lcd.setCursor(0, 1);
     lcd.print("Available: ");
     lcd.setCursor(11, 1);
     lcd.print(available);
-    lcd.print("   ");              // Clear trailing characters
+    lcd.print("   ");
 }
 
-// updateLEDs() — Set LED states based on current occupancy.
+// Update LEDs: Green when capacity available, Red when at maximum capacity
 void updateLEDs(OccupancyInfo* pOcc) {
     if (pOcc->currentCount >= pOcc->maxCapacity) {
-        // At full capacity
+        // Room full: Green OFF, Red ON
         digitalWrite(GREEN_LED_PIN, LOW);
         digitalWrite(RED_LED_PIN,   HIGH);
     } else {
-        // Capacity available
+        // Room has space: Green ON, Red OFF
         digitalWrite(GREEN_LED_PIN, HIGH);
         digitalWrite(RED_LED_PIN,   LOW);
     }
 }
 
-// printStatus() — Print a formatted event log entry to the Serial Monitor.
+// Print formatted event log to Serial Monitor
 void printStatus(OccupancyInfo* pOcc, const char* event) {
     int available = pOcc->maxCapacity - pOcc->currentCount;
 
@@ -254,7 +249,7 @@ void printStatus(OccupancyInfo* pOcc, const char* event) {
     Serial.println(pOcc->totalExits);
 }
 
-// printError() — Print a formatted error message to the Serial Monitor.
+// Print formatted error message to Serial Monitor
 void printError(const char* errorMsg) {
     Serial.print("[");
     Serial.print(getTimestamp());
@@ -262,7 +257,7 @@ void printError(const char* errorMsg) {
     Serial.println(errorMsg);
 }
 
-// getTimestamp() — Return a formatted timestamp string based on millis().
+// Calculate elapsed time since system boot formatted as HH:MM:SS
 String getTimestamp(void) {
     unsigned long totalSeconds = millis() / 1000;
     unsigned long hours   = totalSeconds / 3600;
@@ -274,8 +269,7 @@ String getTimestamp(void) {
     return String(buffer);
 }
 
-// cleanupSystem() — Free dynamically allocated memory.
-// Called when the system needs to perform a graceful shutdown (not typical
+// Free dynamically allocated occupancy structure from heap
 void cleanupSystem(void) {
     if (pOccupancy != NULL) {
         free(pOccupancy);

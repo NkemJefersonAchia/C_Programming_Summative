@@ -39,19 +39,20 @@ C_Programming_Summative/
 
 **Platform:** Arduino (Tinkercad Simulation)
 
-An Arduino-based occupancy monitoring system that tracks the number of people inside a facility using entry and exit push buttons. The system enforces a maximum capacity limit and provides real-time feedback through a 16×2 LCD display, green/red LED indicators, and Serial Monitor logging.
+An Arduino-based occupancy monitoring system that tracks the number of people inside a facility using entry and exit push buttons. The system enforces a maximum capacity limit and provides real-time feedback through a 16×2 I2C LCD display, green/red LED indicators, and Serial Monitor logging.
 
 **Key Concepts Demonstrated:**
 - Structures for organizing occupancy data
 - Pointers for accessing and modifying occupancy records
 - Dynamic memory allocation (`malloc()` / `free()`)
 - Non-blocking programming with `millis()` (no `delay()`)
+- I2C communication with LiquidCrystal_I2C (SDA on A4, SCL on A5)
 - Button debouncing using `millis()`
 - Periodic LCD updates without blocking
 - Error handling for boundary conditions (full/empty facility)
 - Serial communication for event logging
 
-**Hardware Components:** Arduino Uno, 2 push buttons, 2 LEDs (green/red), 16×2 LCD, resistors, breadboard, jumper wires.
+**Hardware Components:** Arduino Uno, 2 push buttons, 2 LEDs (green/red), 16×2 I2C LCD, resistors, breadboard, jumper wires.
 
 📁 [View Project](project1_occupancy_monitor/)
 
