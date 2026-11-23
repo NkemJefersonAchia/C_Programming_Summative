@@ -228,32 +228,6 @@ void displaySummary(ThreadArgs *allArgs[], int numFiles)
         if (allArgs[i]->status == STATUS_SUCCESS) {
             printf("%s: Completed - %d occurrences found in %d lines\n",
                    allArgs[i]->inputFilename,
-    if (args->status == STATUS_ERROR && args->errorMessage[0] != '\0') {
-        fprintf(fp, "Error Details:         %s\n", args->errorMessage);
-    }
-
-    fprintf(fp, "============================================================\n");
-
-    fclose(fp);
-    return 0;
-}
-
-/* ============================ displaySummary ============================== */
-
-/**
- * displaySummary — Print the final processing summary to stdout.
- *
- * Shows per-file results including occurrence count and matching lines,
- * or an error message for files that failed.
- */
-void displaySummary(ThreadArgs *allArgs[], int numFiles)
-{
-    printf("\n===== PROCESSING SUMMARY =====\n\n");
-
-    for (int i = 0; i < numFiles; i++) {
-        if (allArgs[i]->status == STATUS_SUCCESS) {
-            printf("%s: Completed - %d occurrences found in %d lines\n",
-                   allArgs[i]->inputFilename,
                    allArgs[i]->keywordCount,
                    allArgs[i]->matchingLines);
         } else if (allArgs[i]->status == STATUS_ERROR) {
@@ -270,14 +244,10 @@ void displaySummary(ThreadArgs *allArgs[], int numFiles)
     printf("Reports generated successfully.\n");
 }
 
-/* =========================== cleanupThreadArgs ============================ */
+// =========================== cleanupThreadArgs ============================
 
-/**
- * cleanupThreadArgs — Free dynamically allocated memory in a ThreadArgs.
- *
- * Releases the matchingLineNumbers array and sets the pointer to NULL
- * to prevent double-free errors.
- */
+// cleanupThreadArgs — Free dynamically allocated memory in a ThreadArgs.
+// Releases the matchingLineNumbers array and sets the pointer to NULL
 void cleanupThreadArgs(ThreadArgs *args)
 {
     if (args && args->matchingLineNumbers) {
@@ -287,13 +257,10 @@ void cleanupThreadArgs(ThreadArgs *args)
     }
 }
 
-/* =============================== printUsage =============================== */
+// =============================== printUsage ===============================
 
-/**
- * printUsage — Print usage information to stderr.
- *
- * Shows correct command-line syntax and an example invocation.
- */
+// printUsage — Print usage information to stderr.
+// Shows correct command-line syntax and an example invocation.
 void printUsage(const char *programName)
 {
     fprintf(stderr, "\nUsage: %s \"keyword\" file1.txt [file2.txt ...]\n\n",
@@ -306,18 +273,13 @@ void printUsage(const char *programName)
             programName);
 }
 
-/* ================================== main ================================== */
+// ================================== main ==================================
 
-/**
- * main — Entry point for the multi-threaded document analyzer.
- *
- * Validates command-line arguments, initialises per-file ThreadArgs,
- * spawns one POSIX thread per file, joins all threads, prints the
- * summary, and cleans up allocated resources.
- */
+// main — Entry point for the multi-threaded document analyzer.
+// Validates command-line arguments, initialises per-file ThreadArgs,
 int main(int argc, char *argv[])
 {
-    /* ---- Validate command-line arguments ---- */
+    // ---- Validate command-line arguments ----
     if (argc < 3) {
         fprintf(stderr, "Error: Insufficient arguments.\n");
         printUsage(argv[0]);
@@ -325,32 +287,32 @@ int main(int argc, char *argv[])
     }
 
     const char *keyword  = argv[1];
-    int         numFiles = argc - 2;  /* Remaining args are file paths */
+    int         numFiles = argc - 2;  // Remaining args are file paths
 
-    /* Enforce maximum file limit */
+    // Enforce maximum file limit
     if (numFiles > MAX_FILES) {
         fprintf(stderr, "Error: Too many files. Maximum supported: %d\n",
                 MAX_FILES);
         return EXIT_FAILURE;
     }
 
-    /* ---- Display banner ---- */
+    // ---- Display banner ----
     printf("\n===== MULTI-THREADED DOCUMENT ANALYZER =====\n\n");
     printf("Search Keyword: %s\n", keyword);
     printf("Number of Input Files: %d\n\n", numFiles);
 
-    /* ---- Allocate ThreadArgs and pthread_t arrays ---- */
+    // ---- Allocate ThreadArgs and pthread_t arrays ----
     ThreadArgs *argsArray[MAX_FILES];
     pthread_t   threads[MAX_FILES];
-    int         threadCreated[MAX_FILES];  /* Track which threads were created */
+    int         threadCreated[MAX_FILES];  // Track which threads were created
 
-    /* Initialise each ThreadArgs struct */
+    // Initialise each ThreadArgs struct
     for (int i = 0; i < numFiles; i++) {
         argsArray[i] = (ThreadArgs *)malloc(sizeof(ThreadArgs));
         if (!argsArray[i]) {
             fprintf(stderr, "Error: Memory allocation failed for thread %d.\n",
                     i + 1);
-            /* Clean up previously allocated structs */
+            // Clean up previously allocated structs
             for (int j = 0; j < i; j++) {
                 cleanupThreadArgs(argsArray[j]);
                 free(argsArray[j]);
@@ -358,10 +320,10 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
         initThreadArgs(argsArray[i], argv[i + 2], keyword, i + 1);
-        threadCreated[i] = 0;  /* Not yet created */
+        threadCreated[i] = 0;  // Not yet created
     }
 
-    /* ---- Create one thread per input file ---- */
+    // ---- Create one thread per input file ----
     for (int i = 0; i < numFiles; i++) {
         printf("[Thread %d] Processing %s ...\n",
                argsArray[i]->threadID, argsArray[i]->inputFilename);
@@ -383,17 +345,17 @@ int main(int argc, char *argv[])
 
     printf("\n");
 
-    /* ---- Join all successfully created threads ---- */
+    // ---- Join all successfully created threads ----
     for (int i = 0; i < numFiles; i++) {
         if (threadCreated[i]) {
             pthread_join(threads[i], NULL);
         }
     }
 
-    /* ---- Display final summary ---- */
+    // ---- Display final summary ----
     displaySummary(argsArray, numFiles);
 
-    /* ---- Clean up all allocated resources ---- */
+    // ---- Clean up all allocated resources ----
     for (int i = 0; i < numFiles; i++) {
         cleanupThreadArgs(argsArray[i]);
         free(argsArray[i]);
