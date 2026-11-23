@@ -948,65 +948,12 @@ void generateAcademicReport(Student *students, int numStudents) {
         }
 
         if (studentPassing) {
-    memset(progCounts, 0, sizeof(progCounts));
-
-    /* Compute statistics */
-    for (i = 0; i < numStudents; i++) {
-        Student *s = students + i;
-        int studentPassing = 1; /* Assume passing until a course fails */
-
-        totalCourses += s->numCourses;
-
-        /* Calculate student average */
-        avg = calculateStudentAverage(s);
-        overallSum += avg;
-
-        if (avg > highestAvg) {
-            highestAvg = avg;
-            highestIdx = i;
-        }
-        if (avg < lowestAvg) {
-            lowestAvg = avg;
-            lowestIdx = i;
-        }
-
-        /* Check pass/fail per course for this student */
-        for (j = 0; j < s->numCourses; j++) {
-            CourseRecord *c = s->courses + j;
-            float pct = (c->maxMarks > 0) ? (c->marksObtained / c->maxMarks) * 100.0f : 0.0f;
-
-            if (pct < PASS_THRESHOLD) {
-                studentPassing = 0;
-            }
-
-            /* Track per-course average */
-            {
-                int found = 0;
-                for (k = 0; k < uniqueCourses; k++) {
-                    if (strcmp(courseNames[k], c->courseCode) == 0) {
-                        courseSums[k] += pct;
-                        courseCounts[k]++;
-                        found = 1;
-                        break;
-                    }
-                }
-                if (!found && uniqueCourses < 500) {
-                    strncpy(courseNames[uniqueCourses], c->courseCode, MAX_CODE_LEN - 1);
-                    courseNames[uniqueCourses][MAX_CODE_LEN - 1] = '\0';
-                    courseSums[uniqueCourses] = pct;
-                    courseCounts[uniqueCourses] = 1;
-                    uniqueCourses++;
-                }
-            }
-        }
-
-        if (studentPassing) {
             totalPassing++;
         } else {
             totalFailing++;
         }
 
-        /* Track per-programme counts */
+        // Track per-programme counts
         {
             int found = 0;
             for (k = 0; k < uniqueProgs; k++) {
@@ -1025,7 +972,7 @@ void generateAcademicReport(Student *students, int numStudents) {
         }
     }
 
-    /* ---- Print Report ---- */
+    // ---- Print Report ----
     printf("\n1. GENERAL STATISTICS\n");
     printf("   Total Registered Students : %d\n", numStudents);
     printf("   Total Courses (all students): %d\n", totalCourses);
@@ -1080,16 +1027,10 @@ void generateAcademicReport(Student *students, int numStudents) {
     printf("============================================================\n");
 }
 
-/* ============================================================================
- *                          FILE HANDLING
- * ============================================================================ */
+// FILE HANDLING
 
-/*
- * saveRecordsToFile
- * -----------------
- * Saves all student and course records to a text file (students_data.txt).
- * Format: structured plain text with delimiters for parsing.
- */
+// saveRecordsToFile
+// Saves all student and course records to a text file (students_data.txt).
 void saveRecordsToFile(Student *students, int numStudents) {
     int i, j;
     FILE *fp;
@@ -1129,13 +1070,8 @@ void saveRecordsToFile(Student *students, int numStudents) {
     printf("Records saved to '%s' (%d students).\n", DATA_FILE, numStudents);
 }
 
-/*
- * loadRecordsFromFile
- * -------------------
- * Loads student and course records from a text file (students_data.txt).
- * Dynamically allocates memory for students and their courses.
- * Frees any existing records before loading.
- */
+// loadRecordsFromFile
+// Loads student and course records from a text file (students_data.txt).
 void loadRecordsFromFile(Student **students, int *numStudents) {
     FILE *fp;
     char line[512];
@@ -1149,14 +1085,14 @@ void loadRecordsFromFile(Student **students, int *numStudents) {
         return;
     }
 
-    /* Free existing records */
+    // Free existing records
     if (*students != NULL) {
         freeAllMemory(*students, *numStudents);
         *students = NULL;
         *numStudents = 0;
     }
 
-    /* Read the student count */
+    // Read the student count
     if (fgets(line, sizeof(line), fp) != NULL) {
         sscanf(line, "STUDENT_COUNT: %d", &count);
     }
@@ -1167,7 +1103,7 @@ void loadRecordsFromFile(Student **students, int *numStudents) {
         return;
     }
 
-    /* Allocate memory for all students */
+    // Allocate memory for all students
     *students = (Student *)malloc((size_t)count * sizeof(Student));
     if (*students == NULL) {
         printf("Error: Memory allocation failed while loading records.\n");
@@ -1175,7 +1111,7 @@ void loadRecordsFromFile(Student **students, int *numStudents) {
         return;
     }
 
-    /* Initialize all students */
+    // Initialize all students
     {
         int i;
         for (i = 0; i < count; i++) {
@@ -1187,7 +1123,7 @@ void loadRecordsFromFile(Student **students, int *numStudents) {
     currentStudent = -1;
 
     while (fgets(line, sizeof(line), fp) != NULL) {
-        /* Remove trailing newline */
+        // Remove trailing newline
         line[strcspn(line, "\n")] = '\0';
 
         if (strcmp(line, "---") == 0) {
@@ -1218,7 +1154,7 @@ void loadRecordsFromFile(Student **students, int *numStudents) {
             } else if (strncmp(line, "NUM_COURSES: ", 13) == 0) {
                 int nc = 0;
                 sscanf(line + 13, "%d", &nc);
-                /* Allocate courses array */
+                // Allocate courses array
                 if (nc > 0) {
                     s->courses = (CourseRecord *)malloc((size_t)nc * sizeof(CourseRecord));
                     if (s->courses == NULL) {
@@ -1227,23 +1163,23 @@ void loadRecordsFromFile(Student **students, int *numStudents) {
                         nc = 0;
                     }
                 }
-                /* numCourses will be incremented as courses are read */
+                // numCourses will be incremented as courses are read
                 s->numCourses = 0;
             } else if (strncmp(line, "COURSE: ", 8) == 0) {
-                /* Parse: COURSE: code | name | marks | maxMarks */
+                // Parse: COURSE: code | name | marks | maxMarks
                 if (s->courses != NULL) {
                     CourseRecord *c = s->courses + s->numCourses;
                     char *ptr = line + 8;
                     char *token;
 
-                    /* Parse course code */
+                    // Parse course code
                     token = strtok(ptr, "|");
                     if (token != NULL) {
-                        /* Trim trailing space */
+                        // Trim trailing space
                         while (*token == ' ') token++;
                         strncpy(c->courseCode, token, MAX_CODE_LEN - 1);
                         c->courseCode[MAX_CODE_LEN - 1] = '\0';
-                        /* Trim trailing spaces from code */
+                        // Trim trailing spaces from code
                         {
                             int len = (int)strlen(c->courseCode);
                             while (len > 0 && c->courseCode[len - 1] == ' ') {
@@ -1253,7 +1189,7 @@ void loadRecordsFromFile(Student **students, int *numStudents) {
                         }
                     }
 
-                    /* Parse course name */
+                    // Parse course name
                     token = strtok(NULL, "|");
                     if (token != NULL) {
                         while (*token == ' ') token++;
@@ -1268,13 +1204,13 @@ void loadRecordsFromFile(Student **students, int *numStudents) {
                         }
                     }
 
-                    /* Parse marks obtained */
+                    // Parse marks obtained
                     token = strtok(NULL, "|");
                     if (token != NULL) {
                         sscanf(token, "%f", &c->marksObtained);
                     }
 
-                    /* Parse max marks */
+                    // Parse max marks
                     token = strtok(NULL, "|");
                     if (token != NULL) {
                         sscanf(token, "%f", &c->maxMarks);
@@ -1292,36 +1228,30 @@ void loadRecordsFromFile(Student **students, int *numStudents) {
     printf("Loaded %d student(s) from '%s'.\n", count, DATA_FILE);
 }
 
-/* ============================================================================
- *                              MAIN FUNCTION
- * ============================================================================ */
+// MAIN FUNCTION
 
-/*
- * main
- * ----
- * Entry point. Initializes the system, loads existing records from file,
- * runs the main menu loop, and cleans up memory on exit.
- */
+// main
+// Entry point. Initializes the system, loads existing records from file,
 int main(void) {
-    Student *students = NULL;  /* Dynamically allocated array of students */
-    int numStudents = 0;       /* Current number of students              */
-    int choice;                /* User's menu selection                   */
+    Student *students = NULL;  // Dynamically allocated array of students
+    int numStudents = 0;       // Current number of students
+    int choice;                // User's menu selection
 
     printf("============================================\n");
     printf("  Student Academic Records & Analytics System\n");
     printf("============================================\n");
 
-    /* Attempt to load existing records on startup */
+    // Attempt to load existing records on startup
     loadRecordsFromFile(&students, &numStudents);
 
-    /* Main menu loop */
+    // Main menu loop
     do {
         displayMenu();
 
         if (scanf("%d", &choice) != 1) {
             printf("Error: Please enter a valid number.\n");
             clearInputBuffer();
-            choice = -1;  /* Force loop to continue */
+            choice = -1;  // Force loop to continue
             continue;
         }
         clearInputBuffer();
