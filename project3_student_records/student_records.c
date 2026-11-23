@@ -698,37 +698,6 @@ void searchStudents(Student *students, int numStudents) {
     }
     clearInputBuffer();
 
-    }
-}
-
-/*
- * searchStudents
- * --------------
- * Presents a sub-menu for choosing the search type, then performs
- * the appropriate search.
- */
-void searchStudents(Student *students, int numStudents) {
-    int choice, id, index;
-    char searchTerm[MAX_PROGRAMME_LEN];
-
-    printf("\n--- Search Students ---\n");
-    if (numStudents == 0) {
-        printf("No students registered.\n");
-        return;
-    }
-
-    printf("Search by:\n");
-    printf("1. Student ID\n");
-    printf("2. Name (first or last)\n");
-    printf("3. Programme\n");
-    printf("Choice: ");
-    if (scanf("%d", &choice) != 1) {
-        printf("Error: Invalid input.\n");
-        clearInputBuffer();
-        return;
-    }
-    clearInputBuffer();
-
     switch (choice) {
         case 1:
             printf("Enter Student ID: ");
@@ -764,16 +733,11 @@ void searchStudents(Student *students, int numStudents) {
     }
 }
 
-/* ============================================================================
- *                              SORTING
- *       (Manual implementations — NO qsort used)
- * ============================================================================ */
+// SORTING
+// (Manual implementations — NO qsort used)
 
-/*
- * sortByID
- * --------
- * Sorts students array by Student ID in ascending order using bubble sort.
- */
+// sortByID
+// Sorts students array by Student ID in ascending order using bubble sort.
 void sortByID(Student *students, int numStudents) {
     int i, j;
     Student temp;
@@ -790,12 +754,8 @@ void sortByID(Student *students, int numStudents) {
     printf("Students sorted by ID (ascending).\n");
 }
 
-/*
- * sortByName
- * ----------
- * Sorts students array alphabetically by last name, then first name,
- * using bubble sort with strcmp().
- */
+// sortByName
+// Sorts students array alphabetically by last name, then first name,
 void sortByName(Student *students, int numStudents) {
     int i, j, cmp;
     Student temp;
@@ -816,12 +776,8 @@ void sortByName(Student *students, int numStudents) {
     printf("Students sorted by name (alphabetical).\n");
 }
 
-/*
- * sortByAverage
- * -------------
- * Sorts students array by overall academic average in descending order
- * using bubble sort.
- */
+// sortByAverage
+// Sorts students array by overall academic average in descending order
 void sortByAverage(Student *students, int numStudents) {
     int i, j;
     Student temp;
@@ -831,7 +787,7 @@ void sortByAverage(Student *students, int numStudents) {
         for (j = 0; j < numStudents - 1 - i; j++) {
             avgJ = calculateStudentAverage(students + j);
             avgJ1 = calculateStudentAverage(students + j + 1);
-            if (avgJ < avgJ1) {  /* Descending order */
+            if (avgJ < avgJ1) {  // Descending order
                 temp = *(students + j);
                 *(students + j) = *(students + j + 1);
                 *(students + j + 1) = temp;
@@ -841,11 +797,8 @@ void sortByAverage(Student *students, int numStudents) {
     printf("Students sorted by academic average (descending).\n");
 }
 
-/*
- * sortByProgramme
- * ---------------
- * Sorts students array alphabetically by programme using bubble sort.
- */
+// sortByProgramme
+// Sorts students array alphabetically by programme using bubble sort.
 void sortByProgramme(Student *students, int numStudents) {
     int i, j;
     Student temp;
@@ -862,12 +815,8 @@ void sortByProgramme(Student *students, int numStudents) {
     printf("Students sorted by programme (alphabetical).\n");
 }
 
-/*
- * sortStudents
- * ------------
- * Presents a sub-menu for choosing the sort criteria, then performs
- * the appropriate sort using manual bubble sort.
- */
+// sortStudents
+// Presents a sub-menu for choosing the sort criteria, then performs
 void sortStudents(Student *students, int numStudents) {
     int choice;
 
@@ -909,22 +858,10 @@ void sortStudents(Student *students, int numStudents) {
     }
 }
 
-/* ============================================================================
- *                        ACADEMIC REPORT
- * ============================================================================ */
+// ACADEMIC REPORT
 
-/*
- * generateAcademicReport
- * ----------------------
- * Generates a comprehensive academic report including:
- *   - Total registered students
- *   - Total courses across all students
- *   - Overall average academic performance
- *   - Student with highest/lowest average
- *   - Number passing/failing
- *   - Average performance per course
- *   - Number of students per programme
- */
+// generateAcademicReport
+// Generates a comprehensive academic report including:
 void generateAcademicReport(Student *students, int numStudents) {
     int i, j, k;
     int totalCourses = 0;
@@ -934,13 +871,13 @@ void generateAcademicReport(Student *students, int numStudents) {
     int highestIdx = 0, lowestIdx = 0;
     float avg;
 
-    /* For per-course averages: track unique course codes */
+    // For per-course averages: track unique course codes
     char courseNames[500][MAX_CODE_LEN];
     float courseSums[500];
     int courseCounts[500];
     int uniqueCourses = 0;
 
-    /* For per-programme counts */
+    // For per-programme counts
     char progNames[100][MAX_PROGRAMME_LEN];
     int progCounts[100];
     int uniqueProgs = 0;
@@ -955,9 +892,62 @@ void generateAcademicReport(Student *students, int numStudents) {
         return;
     }
 
-    /* Initialize arrays */
+    // Initialize arrays
     memset(courseSums, 0, sizeof(courseSums));
     memset(courseCounts, 0, sizeof(courseCounts));
+    memset(progCounts, 0, sizeof(progCounts));
+
+    // Compute statistics
+    for (i = 0; i < numStudents; i++) {
+        Student *s = students + i;
+        int studentPassing = 1; // Assume passing until a course fails
+
+        totalCourses += s->numCourses;
+
+        // Calculate student average
+        avg = calculateStudentAverage(s);
+        overallSum += avg;
+
+        if (avg > highestAvg) {
+            highestAvg = avg;
+            highestIdx = i;
+        }
+        if (avg < lowestAvg) {
+            lowestAvg = avg;
+            lowestIdx = i;
+        }
+
+        // Check pass/fail per course for this student
+        for (j = 0; j < s->numCourses; j++) {
+            CourseRecord *c = s->courses + j;
+            float pct = (c->maxMarks > 0) ? (c->marksObtained / c->maxMarks) * 100.0f : 0.0f;
+
+            if (pct < PASS_THRESHOLD) {
+                studentPassing = 0;
+            }
+
+            // Track per-course average
+            {
+                int found = 0;
+                for (k = 0; k < uniqueCourses; k++) {
+                    if (strcmp(courseNames[k], c->courseCode) == 0) {
+                        courseSums[k] += pct;
+                        courseCounts[k]++;
+                        found = 1;
+                        break;
+                    }
+                }
+                if (!found && uniqueCourses < 500) {
+                    strncpy(courseNames[uniqueCourses], c->courseCode, MAX_CODE_LEN - 1);
+                    courseNames[uniqueCourses][MAX_CODE_LEN - 1] = '\0';
+                    courseSums[uniqueCourses] = pct;
+                    courseCounts[uniqueCourses] = 1;
+                    uniqueCourses++;
+                }
+            }
+        }
+
+        if (studentPassing) {
     memset(progCounts, 0, sizeof(progCounts));
 
     /* Compute statistics */
