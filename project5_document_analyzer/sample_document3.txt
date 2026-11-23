@@ -1,0 +1,25 @@
+Embedded systems form the backbone of most modern computing devices and appliances.
+Microcontrollers such as ARM Cortex-M series are widely used in IoT products.
+Real-time operating systems (RTOS) ensure deterministic behaviour in time-critical applications.
+The C programming language remains the dominant choice for embedded and IoT development.
+Memory management in embedded systems requires careful attention to avoid leaks and fragmentation.
+Interrupt-driven programming allows microcontrollers to respond to external events efficiently.
+Low-power design techniques extend battery life in portable iot sensor nodes.
+Communication protocols like SPI, I2C, and UART enable peripherals to exchange data with the CPU.
+Firmware over-the-air (FOTA) updates allow deployed IoT devices to receive patches remotely.
+Secure boot mechanisms protect iot devices from running tampered firmware.
+Hardware abstraction layers simplify porting embedded software across different chip families.
+Field-programmable gate arrays (FPGAs) offer reconfigurable hardware for specialised IoT tasks.
+Digital signal processing on embedded platforms enables audio, image, and vibration analysis.
+Power management ICs regulate voltage levels to keep IoT circuits operating within safe margins.
+Sensor fusion algorithms combine data from accelerometers, gyroscopes, and magnetometers.
+Embedded Linux distributions like Yocto provide a full OS stack for more capable IOT gateways.
+Test-driven development practices are increasingly applied to embedded and iot firmware projects.
+Debugging embedded systems often requires JTAG probes and logic analysers alongside software tools.
+The RISC-V open instruction set architecture is gaining traction in IoT chip design.
+Wireless protocols such as LoRa and NB-IoT provide long-range connectivity for remote sensors.
+Capacitive touch sensing has replaced mechanical buttons in many consumer IoT products.
+Over-the-air provisioning streamlines the deployment of thousands of iot devices in the field.
+Energy harvesting technologies allow some IoT sensors to operate without batteries.
+Edge AI accelerators are being integrated directly into IoT microcontrollers for on-device inference.
+The growing ecosystem of development boards makes prototyping IOT solutions faster than ever.
