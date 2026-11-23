@@ -1,14 +1,13 @@
 // Multi-threaded Document Search and Analysis System
 // Author: Nkem Jeferson Achia
 
-#define _GNU_SOURCE  // Required for strcasestr() on some platforms
+#define _GNU_SOURCE  // Required for getline()/strcasestr() on some platforms
 
 #include "document_analyzer.h"
 
 // ======================= Helper: case-insensitive strstr ===================
 
-// caseInsensitiveStrstr — Portable case-insensitive substring search.
-// Falls back to a manual implementation when strcasestr() is unavailable.
+// caseInsensitiveStrstr: portable case-insensitive substring search.
 static const char *caseInsensitiveStrstr(const char *haystack, const char *needle)
 {
     if (!haystack || !needle) return NULL;
@@ -26,15 +25,14 @@ static const char *caseInsensitiveStrstr(const char *haystack, const char *needl
 
 // ============================= initThreadArgs =============================
 
-// initThreadArgs — Initialise a ThreadArgs struct with default values.
-// Sets all counters to zero, copies the filename and keyword, allocates
+// initThreadArgs: initialise a ThreadArgs struct with default values.
+// Sets all counters to zero, copies the filename and keyword, and allocates
+// the initial array that stores matching line numbers.
 void initThreadArgs(ThreadArgs *args, const char *filename,
                     const char *keyword, int threadID)
 {
-    // Zero out the entire struct for a clean slate
     memset(args, 0, sizeof(ThreadArgs));
 
-    // Copy input parameters safely
     strncpy(args->inputFilename, filename, sizeof(args->inputFilename) - 1);
     args->inputFilename[sizeof(args->inputFilename) - 1] = '\0';
 
@@ -43,12 +41,10 @@ void initThreadArgs(ThreadArgs *args, const char *filename,
 
     args->threadID = threadID;
 
-    // Initialise counters
     args->totalLines     = 0;
     args->keywordCount   = 0;
     args->matchingLines  = 0;
 
-    // Allocate initial capacity for matching line numbers
     args->maxMatchingLines    = INITIAL_MATCH_CAP;
     args->matchingLineNumbers = (int *)malloc(sizeof(int) * args->maxMatchingLines);
     if (!args->matchingLineNumbers) {
@@ -57,15 +53,15 @@ void initThreadArgs(ThreadArgs *args, const char *filename,
         args->maxMatchingLines = 0;
     }
 
-    // Mark as pending
     args->status = STATUS_PENDING;
     args->errorMessage[0] = '\0';
 }
 
 // =============================== searchLine ===============================
 
-// searchLine — Count case-insensitive occurrences of keyword in a line.
-// Scans through the line, advancing past each found occurrence to count
+// searchLine: count case-insensitive occurrences of keyword in a line.
+// Scans through the line, advancing past each found occurrence so that
+// matches are never counted twice.
 int searchLine(const char *line, const char *keyword)
 {
     int count = 0;
@@ -76,7 +72,7 @@ int searchLine(const char *line, const char *keyword)
     const char *pos = line;
     while ((pos = caseInsensitiveStrstr(pos, keyword)) != NULL) {
         count++;
-        pos += keyLen;  // Move past this occurrence
+        pos += keyLen;
     }
 
     return count;
@@ -84,15 +80,16 @@ int searchLine(const char *line, const char *keyword)
 
 // ============================== processFile ===============================
 
-// processFile — Thread entry point that searches a single document.
-// Opens the file, reads each line, searches for the keyword, tracks
+// processFile: thread entry point that searches a single document.
+// Opens the file, reads each line (of any length), searches for the keyword,
+// tracks the matching line numbers and then writes the report file.
 void *processFile(void *arg)
 {
     ThreadArgs *tArgs = (ThreadArgs *)arg;
-    char lineBuffer[MAX_LINE_LENGTH];
-    int lineNumber = 0;
+    char  *line = NULL;      // Buffer allocated by getline(), any line length
+    size_t lineCap = 0;
+    int    lineNumber = 0;
 
-    // Attempt to open the input file
     FILE *fp = fopen(tArgs->inputFilename, "r");
     if (!fp) {
         tArgs->status = STATUS_ERROR;
@@ -102,20 +99,17 @@ void *processFile(void *arg)
         return NULL;
     }
 
-    // Read the file line by line
-    while (fgets(lineBuffer, sizeof(lineBuffer), fp) != NULL) {
+    while (getline(&line, &lineCap, fp) != -1) {
         lineNumber++;
 
-        // Search this line for keyword occurrences
-        int occurrences = searchLine(lineBuffer, tArgs->keyword);
+        int occurrences = searchLine(line, tArgs->keyword);
 
         if (occurrences > 0) {
             tArgs->keywordCount += occurrences;
             tArgs->matchingLines++;
 
-            // Store the matching line number, expanding array if needed
             if (tArgs->matchingLineNumbers) {
-                // Grow the array if capacity is reached
+                // Grow the array when capacity is reached
                 if (tArgs->matchingLines > tArgs->maxMatchingLines) {
                     int newCap = tArgs->maxMatchingLines * 2;
                     int *temp = (int *)realloc(tArgs->matchingLineNumbers,
@@ -129,7 +123,6 @@ void *processFile(void *arg)
                     }
                 }
 
-                // Store line number (matchingLines is already incremented)
                 if (tArgs->matchingLines <= tArgs->maxMatchingLines) {
                     tArgs->matchingLineNumbers[tArgs->matchingLines - 1] = lineNumber;
                 }
@@ -137,10 +130,13 @@ void *processFile(void *arg)
         }
     }
 
-    tArgs->totalLines = lineNumber;
+    free(line);
     fclose(fp);
+    tArgs->totalLines = lineNumber;
 
-    // Generate the report file for this document
+    // Set the status before writing the report so the report shows it correctly
+    tArgs->status = STATUS_SUCCESS;
+
     if (generateReport(tArgs) != 0) {
         tArgs->status = STATUS_ERROR;
         snprintf(tArgs->errorMessage, sizeof(tArgs->errorMessage),
@@ -150,8 +146,6 @@ void *processFile(void *arg)
         return NULL;
     }
 
-    // Mark as successfully completed
-    tArgs->status = STATUS_SUCCESS;
     printf("[Thread %d] Successfully processed %s\n",
            tArgs->threadID, tArgs->inputFilename);
 
@@ -160,36 +154,42 @@ void *processFile(void *arg)
 
 // ============================= generateReport =============================
 
-// generateReport — Write an analysis report file for one thread's results.
-// Creates <inputFilename>_report.txt containing a formatted summary of
+// generateReport: write an analysis report file for one thread's results.
+// Creates <inputFilename without extension>_report.txt, for example
+// document1.txt -> document1_report.txt, containing a formatted summary.
 int generateReport(const ThreadArgs *args)
 {
-    // Build the report filename: <inputFilename>_report.txt
+    // Build the report filename by removing the file extension, if any
     char reportFilename[512];
+    const char *lastSlash = strrchr(args->inputFilename, '/');
+    const char *lastDot   = strrchr(args->inputFilename, '.');
+    int baseLen = (int)strlen(args->inputFilename);
+
+    // Only strip the dot if it belongs to the file name, not to a folder
+    if (lastDot && (!lastSlash || lastDot > lastSlash) &&
+        lastDot != args->inputFilename && lastDot != lastSlash + 1) {
+        baseLen = (int)(lastDot - args->inputFilename);
+    }
     snprintf(reportFilename, sizeof(reportFilename),
-             "%s_report.txt", args->inputFilename);
+             "%.*s_report.txt", baseLen, args->inputFilename);
 
     FILE *fp = fopen(reportFilename, "w");
     if (!fp) {
         return -1;
     }
 
-    // Write report header
     fprintf(fp, "============================================================\n");
     fprintf(fp, "       DOCUMENT ANALYSIS REPORT\n");
     fprintf(fp, "============================================================\n\n");
 
-    // File and keyword info
     fprintf(fp, "Input File:            %s\n", args->inputFilename);
     fprintf(fp, "Search Keyword:        %s\n", args->keyword);
     fprintf(fp, "------------------------------------------------------------\n\n");
 
-    // Results summary
     fprintf(fp, "Total Lines Processed: %d\n", args->totalLines);
     fprintf(fp, "Total Keyword Occurrences: %d\n", args->keywordCount);
     fprintf(fp, "Number of Matching Lines:  %d\n", args->matchingLines);
 
-    // List matching line numbers
     fprintf(fp, "\nMatching Line Numbers: ");
     if (args->matchingLines > 0 && args->matchingLineNumbers) {
         for (int i = 0; i < args->matchingLines; i++) {
@@ -201,10 +201,9 @@ int generateReport(const ThreadArgs *args)
         fprintf(fp, "None\n");
     }
 
-    // Processing status
     fprintf(fp, "\n------------------------------------------------------------\n");
     fprintf(fp, "Processing Status:     %s\n",
-            (args->status == STATUS_ERROR) ? "Failed" : "Success");
+            (args->status == STATUS_SUCCESS) ? "Success" : "Failed");
 
     if (args->status == STATUS_ERROR && args->errorMessage[0] != '\0') {
         fprintf(fp, "Error Details:         %s\n", args->errorMessage);
@@ -218,8 +217,9 @@ int generateReport(const ThreadArgs *args)
 
 // ============================ displaySummary ==============================
 
-// displaySummary — Print the final processing summary to stdout.
+// displaySummary: print the final processing summary to stdout.
 // Shows per-file results including occurrence count and matching lines,
+// or the error message for files that failed.
 void displaySummary(ThreadArgs *allArgs[], int numFiles)
 {
     printf("\n===== PROCESSING SUMMARY =====\n\n");
@@ -246,8 +246,9 @@ void displaySummary(ThreadArgs *allArgs[], int numFiles)
 
 // =========================== cleanupThreadArgs ============================
 
-// cleanupThreadArgs — Free dynamically allocated memory in a ThreadArgs.
+// cleanupThreadArgs: free dynamically allocated memory in a ThreadArgs.
 // Releases the matchingLineNumbers array and sets the pointer to NULL
+// so it cannot be freed twice.
 void cleanupThreadArgs(ThreadArgs *args)
 {
     if (args && args->matchingLineNumbers) {
@@ -259,7 +260,7 @@ void cleanupThreadArgs(ThreadArgs *args)
 
 // =============================== printUsage ===============================
 
-// printUsage — Print usage information to stderr.
+// printUsage: print usage information to stderr.
 // Shows correct command-line syntax and an example invocation.
 void printUsage(const char *programName)
 {
@@ -275,11 +276,11 @@ void printUsage(const char *programName)
 
 // ================================== main ==================================
 
-// main — Entry point for the multi-threaded document analyzer.
+// main: entry point for the multi-threaded document analyzer.
 // Validates command-line arguments, initialises per-file ThreadArgs,
+// creates one thread per file, joins them and prints the summary.
 int main(int argc, char *argv[])
 {
-    // ---- Validate command-line arguments ----
     if (argc < 3) {
         fprintf(stderr, "Error: Insufficient arguments.\n");
         printUsage(argv[0]);
@@ -287,32 +288,27 @@ int main(int argc, char *argv[])
     }
 
     const char *keyword  = argv[1];
-    int         numFiles = argc - 2;  // Remaining args are file paths
+    int         numFiles = argc - 2;
 
-    // Enforce maximum file limit
     if (numFiles > MAX_FILES) {
         fprintf(stderr, "Error: Too many files. Maximum supported: %d\n",
                 MAX_FILES);
         return EXIT_FAILURE;
     }
 
-    // ---- Display banner ----
     printf("\n===== MULTI-THREADED DOCUMENT ANALYZER =====\n\n");
     printf("Search Keyword: %s\n", keyword);
     printf("Number of Input Files: %d\n\n", numFiles);
 
-    // ---- Allocate ThreadArgs and pthread_t arrays ----
     ThreadArgs *argsArray[MAX_FILES];
     pthread_t   threads[MAX_FILES];
-    int         threadCreated[MAX_FILES];  // Track which threads were created
+    int         threadCreated[MAX_FILES];
 
-    // Initialise each ThreadArgs struct
     for (int i = 0; i < numFiles; i++) {
         argsArray[i] = (ThreadArgs *)malloc(sizeof(ThreadArgs));
         if (!argsArray[i]) {
             fprintf(stderr, "Error: Memory allocation failed for thread %d.\n",
                     i + 1);
-            // Clean up previously allocated structs
             for (int j = 0; j < i; j++) {
                 cleanupThreadArgs(argsArray[j]);
                 free(argsArray[j]);
@@ -320,10 +316,9 @@ int main(int argc, char *argv[])
             return EXIT_FAILURE;
         }
         initThreadArgs(argsArray[i], argv[i + 2], keyword, i + 1);
-        threadCreated[i] = 0;  // Not yet created
+        threadCreated[i] = 0;
     }
 
-    // ---- Create one thread per input file ----
     for (int i = 0; i < numFiles; i++) {
         printf("[Thread %d] Processing %s ...\n",
                argsArray[i]->threadID, argsArray[i]->inputFilename);
@@ -345,17 +340,14 @@ int main(int argc, char *argv[])
 
     printf("\n");
 
-    // ---- Join all successfully created threads ----
     for (int i = 0; i < numFiles; i++) {
         if (threadCreated[i]) {
             pthread_join(threads[i], NULL);
         }
     }
 
-    // ---- Display final summary ----
     displaySummary(argsArray, numFiles);
 
-    // ---- Clean up all allocated resources ----
     for (int i = 0; i < numFiles; i++) {
         cleanupThreadArgs(argsArray[i]);
         free(argsArray[i]);
