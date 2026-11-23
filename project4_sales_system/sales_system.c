@@ -748,202 +748,10 @@ void sortTransactionsMenu(Transaction *transactions, int count) {
     printf("3. Sort by Total Amount (Ascending)\n");
     printf("4. Sort by Total Amount (Descending)\n");
 
- * searchByAmountRange - Searches for transactions whose totalAmount falls
- * within a specified range [minAmount, maxAmount].
- *
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- * @param minAmount     Minimum totalAmount (inclusive)
- * @param maxAmount     Maximum totalAmount (inclusive)
- */
-void searchByAmountRange(Transaction *transactions, int count,
-                         float minAmount, float maxAmount) {
-    int found = 0;
-
-    printf("\n--- Transactions with Amount $%.2f - $%.2f ---\n", minAmount, maxAmount);
-
-    for (int i = 0; i < count; i++) {
-        if (transactions[i].totalAmount >= minAmount &&
-            transactions[i].totalAmount <= maxAmount) {
-            displayTransaction(&transactions[i]);
-            found++;
-        }
-    }
-
-    if (found == 0) {
-        printf("[Info] No transactions found in that range.\n");
-    } else {
-        printf("[Info] Found %d transaction(s) in range.\n", found);
-    }
-}
-
-/**
- * searchTransactionsMenu - Menu option 7: Lets user choose a search method.
- *
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- */
-void searchTransactionsMenu(Transaction *transactions, int count) {
-    if (count == 0) {
-        printf("\n[Info] No transactions to search.\n");
-        return;
-    }
-
-    printf("\n--- Search Transactions ---\n");
-    printf("1. Search by Transaction ID\n");
-    printf("2. Search by Product Name (case-insensitive)\n");
-    printf("3. Search by Amount Range\n");
-
     int choice;
     if (!getValidInt("Enter choice: ", &choice)) return;
 
-    switch (choice) {
-        case 1: {
-            int id;
-            if (!getValidInt("Enter Transaction ID: ", &id)) return;
-            int index = searchByID(transactions, count, id);
-            if (index == -1) {
-                printf("[Info] Transaction ID %d not found.\n", id);
-            } else {
-                printf("\n--- Transaction Found ---\n");
-                displayTransaction(&transactions[index]);
-            }
-            break;
-        }
-        case 2: {
-            char name[MAX_PRODUCT_NAME];
-            printf("Enter Product Name: ");
-            if (fgets(name, MAX_PRODUCT_NAME, stdin) == NULL) return;
-            name[strcspn(name, "\n")] = '\0';
-            if (strlen(name) == 0) {
-                printf("[Error] Search term cannot be empty.\n");
-                return;
-            }
-            searchByProductName(transactions, count, name);
-            break;
-        }
-        case 3: {
-            float minAmt, maxAmt;
-            if (!getValidFloat("Enter minimum amount: $", &minAmt)) return;
-            if (!getValidFloat("Enter maximum amount: $", &maxAmt)) return;
-            if (minAmt > maxAmt) {
-                printf("[Error] Minimum must be less than or equal to maximum.\n");
-                return;
-            }
-            searchByAmountRange(transactions, count, minAmt, maxAmt);
-            break;
-        }
-        default:
-            printf("[Error] Invalid choice.\n");
-    }
-}
-
-/* ============================================================================
- * Sorting Functions (Manual Implementation — NO qsort)
- * Uses comparison callbacks (CompareFunc) to decouple sort logic from
- * comparison logic.
- * ============================================================================ */
-
-/**
- * compareByID - Comparison callback for sorting by Transaction ID.
- *
- * @param a  Pointer to first transaction
- * @param b  Pointer to second transaction
- * @return   Negative if a < b, zero if equal, positive if a > b
- */
-int compareByID(const Transaction *a, const Transaction *b) {
-    return a->transactionID - b->transactionID;
-}
-
-/**
- * compareByProductName - Comparison callback for sorting by product name.
- *
- * @param a  Pointer to first transaction
- * @param b  Pointer to second transaction
- * @return   Result of strcmp on product names
- */
-int compareByProductName(const Transaction *a, const Transaction *b) {
-    return strcmp(a->productName, b->productName);
-}
-
-/**
- * compareByAmountAsc - Comparison callback for sorting by totalAmount ascending.
- *
- * @param a  Pointer to first transaction
- * @param b  Pointer to second transaction
- * @return   Negative if a < b, zero if equal, positive if a > b
- */
-int compareByAmountAsc(const Transaction *a, const Transaction *b) {
-    if (a->totalAmount < b->totalAmount) return -1;
-    if (a->totalAmount > b->totalAmount) return 1;
-    return 0;
-}
-
-/**
- * compareByAmountDesc - Comparison callback for sorting by totalAmount descending.
- *
- * @param a  Pointer to first transaction
- * @param b  Pointer to second transaction
- * @return   Positive if a < b, zero if equal, negative if a > b
- */
-int compareByAmountDesc(const Transaction *a, const Transaction *b) {
-    if (a->totalAmount > b->totalAmount) return -1;
-    if (a->totalAmount < b->totalAmount) return 1;
-    return 0;
-}
-
-/**
- * bubbleSort - Manual bubble sort algorithm using a CompareFunc callback.
- *
- * The sort algorithm is decoupled from the comparison logic: the CompareFunc
- * callback determines the ordering, allowing the same sort function to sort
- * by different criteria simply by passing a different comparison function.
- *
- * @param transactions  Array of transactions to sort
- * @param count         Number of transactions
- * @param cmp           Comparison callback function pointer
- */
-void bubbleSort(Transaction *transactions, int count, CompareFunc cmp) {
-    for (int i = 0; i < count - 1; i++) {
-        int swapped = 0;
-        for (int j = 0; j < count - i - 1; j++) {
-            /* Use the comparison callback to decide ordering */
-            if (cmp(&transactions[j], &transactions[j + 1]) > 0) {
-                /* Swap transactions */
-                Transaction temp = transactions[j];
-                transactions[j] = transactions[j + 1];
-                transactions[j + 1] = temp;
-                swapped = 1;
-            }
-        }
-        /* Optimization: stop if no swaps occurred (already sorted) */
-        if (!swapped) break;
-    }
-}
-
-/**
- * sortTransactionsMenu - Menu option 8: Lets user choose sort criteria.
- * Uses comparison callbacks with the bubble sort implementation.
- *
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- */
-void sortTransactionsMenu(Transaction *transactions, int count) {
-    if (count == 0) {
-        printf("\n[Info] No transactions to sort.\n");
-        return;
-    }
-
-    printf("\n--- Sort Transactions ---\n");
-    printf("1. Sort by Transaction ID\n");
-    printf("2. Sort by Product Name\n");
-    printf("3. Sort by Total Amount (Ascending)\n");
-    printf("4. Sort by Total Amount (Descending)\n");
-
-    int choice;
-    if (!getValidInt("Enter choice: ", &choice)) return;
-
-    /* Select the appropriate comparison callback */
+    // Select the appropriate comparison callback
     CompareFunc comparator = NULL;
     const char *sortLabel = "";
 
@@ -969,25 +777,207 @@ void sortTransactionsMenu(Transaction *transactions, int count) {
             return;
     }
 
-    /* Sort using the selected comparison callback */
+    // Sort using the selected comparison callback
     bubbleSort(transactions, count, comparator);
     printf("[Success] Transactions sorted by %s.\n", sortLabel);
 
-    /* Display sorted results */
+    // Display sorted results
     displayAllTransactions(transactions, count);
 }
 
-/* ============================================================================
- * Sales Report
- * ============================================================================ */
+// Sales Report
 
-/**
- * generateSalesReport - Menu option 9: Generates a comprehensive sales report.
- *
- * Uses the SalesProcessor functions (called directly here for the report)
- * to compute: total transactions, total revenue, average value, highest/lowest
- * amounts, total quantity, and revenue breakdown by product.
- *
+// generateSalesReport - Menu option 9: Generates a comprehensive sales report.
+// Uses the SalesProcessor functions (called directly here for the report)
+void generateSalesReport(Transaction *transactions, int count) {
+    if (count == 0) {
+        printf("\n[Info] No transactions — cannot generate report.\n");
+        return;
+    }
+
+    printf("\n");
+    printf("╔═══════════════════════════════════════════════════╗\n");
+    printf("║           SALES ANALYSIS REPORT                  ║\n");
+    printf("╠═══════════════════════════════════════════════════╣\n");
+
+    // Use our SalesProcessor functions
+    float totalRevenue  = calculateTotalRevenue(transactions, count);
+    float avgValue      = calculateAverageValue(transactions, count);
+    float highestAmount = findHighestTransaction(transactions, count);
+    float lowestAmount  = findLowestTransaction(transactions, count);
+    float totalUnits    = calculateTotalUnitsSold(transactions, count);
+
+    printf("║  Total Transactions:    %-10d                ║\n", count);
+    printf("║  Total Revenue:         $%-10.2f               ║\n", totalRevenue);
+    printf("║  Average Value:         $%-10.2f               ║\n", avgValue);
+    printf("║  Highest Transaction:   $%-10.2f               ║\n", highestAmount);
+    printf("║  Lowest Transaction:    $%-10.2f               ║\n", lowestAmount);
+    printf("║  Total Units Sold:      %-10.0f                ║\n", totalUnits);
+    printf("╠═══════════════════════════════════════════════════╣\n");
+    printf("║           REVENUE BY PRODUCT                     ║\n");
+    printf("╠═══════════════════════════════════════════════════╣\n");
+
+    // Revenue by product: collect unique product names and sum their revenue.
+// We use a simple O(n^2) approach to find unique products.
+    char processedProducts[100][MAX_PRODUCT_NAME];
+    int numProcessed = 0;
+
+    for (int i = 0; i < count; i++) {
+        // Check if this product has already been processed
+        int alreadyDone = 0;
+        char lowerCurrent[MAX_PRODUCT_NAME];
+        toLowerStr(lowerCurrent, transactions[i].productName);
+
+        for (int j = 0; j < numProcessed; j++) {
+            char lowerProcessed[MAX_PRODUCT_NAME];
+            toLowerStr(lowerProcessed, processedProducts[j]);
+            if (strcmp(lowerCurrent, lowerProcessed) == 0) {
+                alreadyDone = 1;
+                break;
+            }
+        }
+
+        if (!alreadyDone && numProcessed < 100) {
+            // Sum revenue for this product
+            float productRevenue = 0.0f;
+            int productQty = 0;
+
+            for (int k = 0; k < count; k++) {
+                char lowerK[MAX_PRODUCT_NAME];
+                toLowerStr(lowerK, transactions[k].productName);
+                if (strcmp(lowerCurrent, lowerK) == 0) {
+                    productRevenue += transactions[k].totalAmount;
+                    productQty += transactions[k].quantitySold;
+                }
+            }
+
+            printf("║  %-20s  Qty: %-5d  Rev: $%-10.2f ║\n",
+                   transactions[i].productName, productQty, productRevenue);
+
+            strcpy(processedProducts[numProcessed], transactions[i].productName);
+            numProcessed++;
+        }
+    }
+
+    printf("╚═══════════════════════════════════════════════════╝\n");
+}
+
+// File Handling
+
+// saveTransactions - Saves all transactions to a text file.
+// Format: one transaction per line, pipe-delimited.
+int saveTransactions(Transaction *transactions, int count, const char *filename) {
+    FILE *file = fopen(filename, "w");
+    if (file == NULL) {
+        printf("[Error] Cannot open file '%s' for writing.\n", filename);
+        return 0;
+    }
+
+    // Write header comment
+    fprintf(file, "# Sales Transactions Data File\n");
+    fprintf(file, "# Format: ID|ProductName|Quantity|UnitPrice|TotalAmount|Date\n");
+
+    for (int i = 0; i < count; i++) {
+        fprintf(file, "%d|%s|%d|%.2f|%.2f|%s\n",
+                transactions[i].transactionID,
+                transactions[i].productName,
+                transactions[i].quantitySold,
+                transactions[i].unitPrice,
+                transactions[i].totalAmount,
+                transactions[i].transactionDate);
+    }
+
+    fclose(file);
+    printf("[Success] %d transaction(s) saved to '%s'.\n", count, filename);
+    return 1;
+}
+
+// loadTransactions - Loads transactions from a text file into the array.
+// Skips lines starting with '#' (comments). Dynamically expands the array
+int loadTransactions(Transaction **transactions, int *count, int *capacity,
+                     const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        // File not found is not necessarily an error on startup
+        return -1;
+    }
+
+    char line[512];
+    int loaded = 0;
+
+    while (fgets(line, sizeof(line), file) != NULL) {
+        // Skip comment lines
+        if (line[0] == '#') continue;
+
+        // Remove trailing newline
+        line[strcspn(line, "\n")] = '\0';
+
+        if (strlen(line) == 0) continue;
+
+        // Ensure capacity before adding
+        if (!ensureCapacity(transactions, capacity, *count)) {
+            printf("[Error] Memory allocation failed during load.\n");
+            fclose(file);
+            return loaded;
+        }
+
+        Transaction *t = &(*transactions)[*count];
+
+        // Parse pipe-delimited line
+        int parsed = sscanf(line, "%d|%99[^|]|%d|%f|%f|%19[^\n]",
+                            &t->transactionID,
+                            t->productName,
+                            &t->quantitySold,
+                            &t->unitPrice,
+                            &t->totalAmount,
+                            t->transactionDate);
+
+        if (parsed == 6) {
+            (*count)++;
+            loaded++;
+        }
+    }
+
+    fclose(file);
+    printf("[Success] %d transaction(s) loaded from '%s'.\n", loaded, filename);
+    return loaded;
+}
+
+// Main Function
+
+// main - Entry point for the Sales Transaction Management System.
+// Initializes the transaction array, attempts to load saved data,
+int main(void) {
+    Transaction *transactions = NULL;
+    int count = 0;
+    int capacity = 0;
+    int choice;
+
+    printf("╔═══════════════════════════════════════════════════╗\n");
+    printf("║  Sales Transaction Processing & Analysis System  ║\n");
+    printf("║  Demonstrating Function Pointers & Callbacks     ║\n");
+    printf("╚═══════════════════════════════════════════════════╝\n\n");
+
+    // Initialize dynamic array
+    if (!initTransactions(&transactions, &capacity, &count)) {
+        printf("[Fatal] Cannot initialize system. Exiting.\n");
+        return 1;
+    }
+
+    // Attempt to load saved transactions on startup
+    if (loadTransactions(&transactions, &count, &capacity, DATA_FILE) >= 0) {
+        printf("[Info] Data loaded from '%s'.\n", DATA_FILE);
+    } else {
+        printf("[Info] No saved data found. Starting fresh.\n");
+    }
+
+    // ---- Main Menu Loop ----
+    do {
+        displayMenu();
+        if (!getValidInt("Enter your choice: ", &choice)) {
+            continue;
+        }
+
  * @param transactions  Array of transactions
  * @param count         Number of transactions
  */
