@@ -28,36 +28,36 @@ typedef struct {
     int currentCount;
     int maxCapacity;
     unsigned long totalEntries;
-#define RED_LED_PIN       9   /* Red LED   — at maximum capacity             */
-
-/* ---------------------------------------------------------------------------
- * System Constants
- * --------------------------------------------------------------------------- */
-#define MAX_CAPACITY       10  /* Maximum number of people allowed in the room */
-#define DEBOUNCE_DELAY    200  /* Button debounce interval in milliseconds     */
-#define LCD_UPDATE_INTERVAL 500 /* LCD refresh interval in milliseconds       */
-#define SERIAL_BAUD_RATE 9600  /* Serial communication baud rate              */
-
-/* ---------------------------------------------------------------------------
- * Data Structures
- * --------------------------------------------------------------------------- */
-
-/**
- * @struct OccupancyInfo
- * @brief  Holds all occupancy-related counters for the monitored room.
- *
- * @field currentCount  Number of people currently in the room (0..MAX_CAPACITY)
- * @field maxCapacity   Maximum allowed occupancy
- * @field totalEntries  Cumulative count of successful entry events
- * @field totalExits    Cumulative count of successful exit events
- */
-typedef struct {
-    int currentCount;
-    int maxCapacity;
-    unsigned long totalEntries;
     unsigned long totalExits;
 } OccupancyInfo;
 
+// Global Variables
+
+// LCD object: RS, EN, D4, D5, D6, D7
+LiquidCrystal lcd(LCD_RS_PIN, LCD_EN_PIN, LCD_D4_PIN, LCD_D5_PIN,
+                   LCD_D6_PIN, LCD_D7_PIN);
+
+// Pointer to dynamically allocated OccupancyInfo struct
+OccupancyInfo* pOccupancy = NULL;
+
+// Timing variables for non-blocking debounce (millis-based)
+unsigned long lastEntryPressTime = 0;  // Last valid entry button press time
+unsigned long lastExitPressTime  = 0;  // Last valid exit button press time
+unsigned long lastLCDUpdateTime  = 0;  // Last LCD refresh time
+
+// Previous button states for edge detection
+int prevEntryState = HIGH;  // Previous reading of entry button (pull-up)
+int prevExitState  = HIGH;  // Previous reading of exit button  (pull-up)
+
+// Function Prototypes
+void initSystem(void);
+void handleEntry(OccupancyInfo* pOcc);
+void handleExit(OccupancyInfo* pOcc);
+void updateLCD(OccupancyInfo* pOcc);
+void updateLEDs(OccupancyInfo* pOcc);
+void printStatus(OccupancyInfo* pOcc, const char* event);
+void printError(const char* errorMsg);
+void cleanupSystem(void);
 /* ---------------------------------------------------------------------------
  * Global Variables
  * --------------------------------------------------------------------------- */
