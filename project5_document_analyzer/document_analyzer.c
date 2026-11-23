@@ -1,39 +1,14 @@
-/**
- * =============================================================================
- * Project 5: Multi-threaded Document Search and Analysis System
- * =============================================================================
- *
- * File:        document_analyzer.c
- * Description: Main implementation of the multi-threaded document analyzer.
- *              Uses POSIX threads (pthreads) to concurrently search multiple
- *              text documents for a user-specified keyword. Each thread
- *              processes one file independently, counts keyword occurrences
- *              (case-insensitive), and generates a per-file report.
- *
- * Author:      Nkem Jeferson Achia
- * Date:        2026-11-21
- * Course:      C Programming — Trimester 6 Summative
- *
- * Compilation: gcc -o document_analyzer document_analyzer.c -lpthread
- * Usage:       ./document_analyzer "keyword" file1.txt file2.txt ...
- * =============================================================================
- */
+// Multi-threaded Document Search and Analysis System
+// Author: Nkem Jeferson Achia
 
-#define _GNU_SOURCE  /* Required for strcasestr() on some platforms */
+#define _GNU_SOURCE  // Required for strcasestr() on some platforms
 
 #include "document_analyzer.h"
 
-/* ======================= Helper: case-insensitive strstr =================== */
+// ======================= Helper: case-insensitive strstr ===================
 
-/**
- * caseInsensitiveStrstr — Portable case-insensitive substring search.
- *
- * Falls back to a manual implementation when strcasestr() is unavailable.
- *
- * @param haystack  The string to search within.
- * @param needle    The substring to find.
- * @return          Pointer to the first occurrence, or NULL if not found.
- */
+// caseInsensitiveStrstr — Portable case-insensitive substring search.
+// Falls back to a manual implementation when strcasestr() is unavailable.
 static const char *caseInsensitiveStrstr(const char *haystack, const char *needle)
 {
     if (!haystack || !needle) return NULL;
@@ -49,21 +24,17 @@ static const char *caseInsensitiveStrstr(const char *haystack, const char *needl
     return NULL;
 }
 
-/* ============================= initThreadArgs ============================= */
+// ============================= initThreadArgs =============================
 
-/**
- * initThreadArgs — Initialise a ThreadArgs struct with default values.
- *
- * Sets all counters to zero, copies the filename and keyword, allocates
- * initial storage for matching line numbers, and marks status as pending.
- */
+// initThreadArgs — Initialise a ThreadArgs struct with default values.
+// Sets all counters to zero, copies the filename and keyword, allocates
 void initThreadArgs(ThreadArgs *args, const char *filename,
                     const char *keyword, int threadID)
 {
-    /* Zero out the entire struct for a clean slate */
+    // Zero out the entire struct for a clean slate
     memset(args, 0, sizeof(ThreadArgs));
 
-    /* Copy input parameters safely */
+    // Copy input parameters safely
     strncpy(args->inputFilename, filename, sizeof(args->inputFilename) - 1);
     args->inputFilename[sizeof(args->inputFilename) - 1] = '\0';
 
@@ -72,12 +43,12 @@ void initThreadArgs(ThreadArgs *args, const char *filename,
 
     args->threadID = threadID;
 
-    /* Initialise counters */
+    // Initialise counters
     args->totalLines     = 0;
     args->keywordCount   = 0;
     args->matchingLines  = 0;
 
-    /* Allocate initial capacity for matching line numbers */
+    // Allocate initial capacity for matching line numbers
     args->maxMatchingLines    = INITIAL_MATCH_CAP;
     args->matchingLineNumbers = (int *)malloc(sizeof(int) * args->maxMatchingLines);
     if (!args->matchingLineNumbers) {
@@ -86,19 +57,15 @@ void initThreadArgs(ThreadArgs *args, const char *filename,
         args->maxMatchingLines = 0;
     }
 
-    /* Mark as pending */
+    // Mark as pending
     args->status = STATUS_PENDING;
     args->errorMessage[0] = '\0';
 }
 
-/* =============================== searchLine =============================== */
+// =============================== searchLine ===============================
 
-/**
- * searchLine — Count case-insensitive occurrences of keyword in a line.
- *
- * Scans through the line, advancing past each found occurrence to count
- * all non-overlapping matches.
- */
+// searchLine — Count case-insensitive occurrences of keyword in a line.
+// Scans through the line, advancing past each found occurrence to count
 int searchLine(const char *line, const char *keyword)
 {
     int count = 0;
@@ -109,10 +76,28 @@ int searchLine(const char *line, const char *keyword)
     const char *pos = line;
     while ((pos = caseInsensitiveStrstr(pos, keyword)) != NULL) {
         count++;
-        pos += keyLen;  /* Move past this occurrence */
+        pos += keyLen;  // Move past this occurrence
     }
 
     return count;
+}
+
+// ============================== processFile ===============================
+
+// processFile — Thread entry point that searches a single document.
+// Opens the file, reads each line, searches for the keyword, tracks
+void *processFile(void *arg)
+{
+    ThreadArgs *tArgs = (ThreadArgs *)arg;
+    char lineBuffer[MAX_LINE_LENGTH];
+    int lineNumber = 0;
+
+    // Attempt to open the input file
+    FILE *fp = fopen(tArgs->inputFilename, "r");
+    if (!fp) {
+        tArgs->status = STATUS_ERROR;
+        snprintf(tArgs->errorMessage, sizeof(tArgs->errorMessage),
+                 "Error: Cannot open file '%s'", tArgs->inputFilename);
 }
 
 /* ============================== processFile =============================== */
