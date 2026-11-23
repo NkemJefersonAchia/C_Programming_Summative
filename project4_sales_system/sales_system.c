@@ -1,53 +1,20 @@
-/*
- * ============================================================================
- * Project 4: Sales Transaction Processing and Analysis System
- * ============================================================================
- * File:        sales_system.c
- * Description: A comprehensive sales transaction management system in C that
- *              demonstrates dynamic memory allocation, function pointers,
- *              callback functions, manual searching/sorting, file I/O, and
- *              modular program design.
- *
- * Key Concepts Demonstrated:
- *   - Function Pointers (SalesProcessor): Used in menu option 5 to select
- *     and invoke data processing functions at runtime via a function pointer
- *     array.
- *   - Callback Functions (TransactionFilter): Used in menu option 6 to pass
- *     filter functions as arguments to applyFilter(), enabling flexible
- *     and reusable filtering logic.
- *   - Comparison Callbacks (CompareFunc): Used in sorting to decouple the
- *     sort algorithm from the comparison logic.
- *   - Dynamic Memory: malloc/realloc/free with capacity tracking.
- *
- * Author:      Nkem Jeferson Achia
- * Date:        2026-11-21
- * Course:      C Programming - Trimester 6
- * ============================================================================
- */
+// Sales Transaction Processing and Analysis System
+// Author: Nkem Jeferson Achia
 
 #include "sales_system.h"
 
-/* ============================================================================
- * Utility Functions
- * ============================================================================ */
+// Utility Functions
 
-/**
- * clearInputBuffer - Discards remaining characters in stdin up to newline.
- * Prevents leftover characters from affecting subsequent reads.
- */
+// clearInputBuffer - Discards remaining characters in stdin up to newline.
+// Prevents leftover characters from affecting subsequent reads.
 void clearInputBuffer(void) {
     int c;
     while ((c = getchar()) != '\n' && c != EOF)
         ;
 }
 
-/**
- * toLowerStr - Copies src to dest, converting all characters to lowercase.
- * Used for case-insensitive string comparisons.
- *
- * @param dest  Destination buffer (must be large enough)
- * @param src   Source string
- */
+// toLowerStr - Copies src to dest, converting all characters to lowercase.
+// Used for case-insensitive string comparisons.
 void toLowerStr(char *dest, const char *src) {
     int i = 0;
     while (src[i] != '\0') {
@@ -57,13 +24,7 @@ void toLowerStr(char *dest, const char *src) {
     dest[i] = '\0';
 }
 
-/**
- * getValidInt - Prompts the user and reads a valid integer.
- *
- * @param prompt  The prompt message to display
- * @param value   Pointer to store the validated integer
- * @return        1 on success, 0 on invalid input
- */
+// getValidInt - Prompts the user and reads a valid integer.
 int getValidInt(const char *prompt, int *value) {
     printf("%s", prompt);
     if (scanf("%d", value) != 1) {
@@ -75,13 +36,7 @@ int getValidInt(const char *prompt, int *value) {
     return 1;
 }
 
-/**
- * getValidFloat - Prompts the user and reads a valid float.
- *
- * @param prompt  The prompt message to display
- * @param value   Pointer to store the validated float
- * @return        1 on success, 0 on invalid input
- */
+// getValidFloat - Prompts the user and reads a valid float.
 int getValidFloat(const char *prompt, float *value) {
     printf("%s", prompt);
     if (scanf("%f", value) != 1) {
@@ -93,9 +48,7 @@ int getValidFloat(const char *prompt, float *value) {
     return 1;
 }
 
-/**
- * displayMenu - Prints the main menu options to stdout.
- */
+// displayMenu - Prints the main menu options to stdout.
 void displayMenu(void) {
     printf("\n===== SALES TRANSACTION MANAGEMENT SYSTEM =====\n");
     printf("1.  Add New Transaction\n");
@@ -113,26 +66,58 @@ void displayMenu(void) {
     printf("================================================\n");
 }
 
-/* ============================================================================
- * Dynamic Memory Management
- * ============================================================================ */
+// Dynamic Memory Management
 
-/**
- * initTransactions - Allocates initial memory for the transaction array
- * using malloc. Sets capacity to INITIAL_CAPACITY and count to 0.
- *
- * @param transactions  Pointer to the transaction array pointer
- * @param capacity      Pointer to store allocated capacity
- * @param count         Pointer to store transaction count (set to 0)
- * @return              1 on success, 0 on allocation failure
- */
+// initTransactions - Allocates initial memory for the transaction array
+// using malloc. Sets capacity to INITIAL_CAPACITY and count to 0.
 int initTransactions(Transaction **transactions, int *capacity, int *count) {
     *capacity = INITIAL_CAPACITY;
     *count = 0;
 
-    /* Allocate initial array using malloc */
+    // Allocate initial array using malloc
     *transactions = (Transaction *)malloc(sizeof(Transaction) * (*capacity));
 
+    if (*transactions == NULL) {
+        printf("[Error] Memory allocation failed! Cannot initialize transactions.\n");
+        return 0;
+    }
+
+    printf("[Info] Transaction system initialized (capacity: %d).\n", *capacity);
+    return 1;
+}
+
+// ensureCapacity - Checks if the array is full and doubles capacity using
+// realloc when needed. Preserves existing data.
+int ensureCapacity(Transaction **transactions, int *capacity, int count) {
+    if (count < *capacity) {
+        return 1;  // Still have room
+    }
+
+    // Double the capacity
+    int newCapacity = (*capacity) * 2;
+    Transaction *temp = (Transaction *)realloc(*transactions,
+                                                sizeof(Transaction) * newCapacity);
+
+    if (temp == NULL) {
+        printf("[Error] Memory reallocation failed! Cannot expand array.\n");
+        return 0;
+    }
+
+    *transactions = temp;
+    *capacity = newCapacity;
+    printf("[Info] Array capacity expanded to %d.\n", newCapacity);
+    return 1;
+}
+
+// freeTransactions - Frees the dynamically allocated transaction array
+// and resets count and capacity to 0.
+void freeTransactions(Transaction **transactions, int *count, int *capacity) {
+    if (*transactions != NULL) {
+        free(*transactions);
+        *transactions = NULL;
+    }
+    *count = 0;
+    *capacity = 0;
     if (*transactions == NULL) {
         printf("[Error] Memory allocation failed! Cannot initialize transactions.\n");
         return 0;
