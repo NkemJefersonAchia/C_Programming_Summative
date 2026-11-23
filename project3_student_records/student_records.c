@@ -98,24 +98,6 @@ void displayStudentFull(Student *student) {
                    c->marksObtained, c->maxMarks, pct);
         }
     }
-    printf("Year of Study: %d\n", student->yearOfStudy);
-    printf("Courses     : %d\n", student->numCourses);
-
-    if (student->numCourses > 0) {
-        printf("\n  %-15s %-30s %10s %10s %8s\n",
-               "Code", "Course Name", "Marks", "Max", "Pct(%)");
-        printf("  ");
-        for (i = 0; i < 78; i++) printf("-");
-        printf("\n");
-
-        for (i = 0; i < student->numCourses; i++) {
-            CourseRecord *c = student->courses + i;
-            float pct = (c->maxMarks > 0) ? (c->marksObtained / c->maxMarks) * 100.0f : 0.0f;
-            printf("  %-15s %-30s %10.2f %10.2f %7.2f%%\n",
-                   c->courseCode, c->courseName,
-                   c->marksObtained, c->maxMarks, pct);
-        }
-    }
 
     avg = calculateStudentAverage(student);
     printf("\n  Overall Average: %.2f%%\n", avg);
@@ -123,12 +105,8 @@ void displayStudentFull(Student *student) {
     printf("-----------------------\n");
 }
 
-/*
- * freeAllMemory
- * -------------
- * Frees all dynamically allocated memory: each student's courses array,
- * then the students array itself.
- */
+// freeAllMemory
+// Frees all dynamically allocated memory: each student's courses array,
 void freeAllMemory(Student *students, int numStudents) {
     int i;
     if (students == NULL) return;
@@ -142,15 +120,10 @@ void freeAllMemory(Student *students, int numStudents) {
     free(students);
 }
 
-/* ============================================================================
- *                            MENU AND UI
- * ============================================================================ */
+// MENU AND UI
 
-/*
- * displayMenu
- * -----------
- * Displays the main menu options to the user.
- */
+// displayMenu
+// Displays the main menu options to the user.
 void displayMenu(void) {
     printf("\n===== STUDENT ACADEMIC RECORDS SYSTEM =====\n");
     printf("1.  Register New Student\n");
@@ -171,17 +144,10 @@ void displayMenu(void) {
     printf("Enter your choice: ");
 }
 
-/* ============================================================================
- *                       STUDENT CRUD OPERATIONS
- * ============================================================================ */
+// STUDENT CRUD OPERATIONS
 
-/*
- * registerStudent
- * ---------------
- * Registers a new student by collecting their information and adding them
- * to the dynamically allocated students array using realloc().
- * Validates for duplicate IDs and valid year of study.
- */
+// registerStudent
+// Registers a new student by collecting their information and adding them
 void registerStudent(Student **students, int *numStudents) {
     int id, year;
     Student *temp;
@@ -189,7 +155,7 @@ void registerStudent(Student **students, int *numStudents) {
 
     printf("\n--- Register New Student ---\n");
 
-    /* Get and validate student ID */
+    // Get and validate student ID
     printf("Enter Student ID: ");
     if (scanf("%d", &id) != 1) {
         printf("Error: Invalid input for Student ID.\n");
@@ -198,13 +164,13 @@ void registerStudent(Student **students, int *numStudents) {
     }
     clearInputBuffer();
 
-    /* Check for duplicate ID */
+    // Check for duplicate ID
     if (isDuplicateID(*students, *numStudents, id)) {
         printf("Error: Student ID %d already exists.\n", id);
         return;
     }
 
-    /* Expand the students array using realloc */
+    // Expand the students array using realloc
     temp = (Student *)realloc(*students, (size_t)(*numStudents + 1) * sizeof(Student));
     if (temp == NULL) {
         printf("Error: Memory allocation failed. Cannot register student.\n");
@@ -212,35 +178,35 @@ void registerStudent(Student **students, int *numStudents) {
     }
     *students = temp;
 
-    /* Pointer to the new student slot */
+    // Pointer to the new student slot
     newStudent = *students + *numStudents;
 
-    /* Initialize the new student */
+    // Initialize the new student
     newStudent->studentID = id;
     newStudent->numCourses = 0;
     newStudent->courses = NULL;
 
-    /* Get first name */
+    // Get first name
     printf("Enter First Name: ");
     fgets(newStudent->firstName, MAX_NAME_LEN, stdin);
     newStudent->firstName[strcspn(newStudent->firstName, "\n")] = '\0';
 
-    /* Get last name */
+    // Get last name
     printf("Enter Last Name: ");
     fgets(newStudent->lastName, MAX_NAME_LEN, stdin);
     newStudent->lastName[strcspn(newStudent->lastName, "\n")] = '\0';
 
-    /* Get programme */
+    // Get programme
     printf("Enter Programme: ");
     fgets(newStudent->programme, MAX_PROGRAMME_LEN, stdin);
     newStudent->programme[strcspn(newStudent->programme, "\n")] = '\0';
 
-    /* Get and validate year of study */
+    // Get and validate year of study
     printf("Enter Year of Study (%d-%d): ", MIN_YEAR, MAX_YEAR);
     if (scanf("%d", &year) != 1 || year < MIN_YEAR || year > MAX_YEAR) {
         printf("Error: Year of study must be between %d and %d.\n", MIN_YEAR, MAX_YEAR);
         clearInputBuffer();
-        /* Remove the partially added student by not incrementing count */
+        // Remove the partially added student by not incrementing count
         return;
     }
     clearInputBuffer();
@@ -251,11 +217,8 @@ void registerStudent(Student **students, int *numStudents) {
            newStudent->firstName, newStudent->lastName, newStudent->studentID);
 }
 
-/*
- * displayAllStudents
- * ------------------
- * Displays a formatted table of all registered students with summary info.
- */
+// displayAllStudents
+// Displays a formatted table of all registered students with summary info.
 void displayAllStudents(Student *students, int numStudents) {
     int i;
 
@@ -278,11 +241,8 @@ void displayAllStudents(Student *students, int numStudents) {
     printf("Total students: %d\n", numStudents);
 }
 
-/*
- * viewStudentDetails
- * ------------------
- * Prompts for a student ID and displays their full record including courses.
- */
+// viewStudentDetails
+// Prompts for a student ID and displays their full record including courses.
 void viewStudentDetails(Student *students, int numStudents) {
     int id, index;
 
@@ -309,15 +269,35 @@ void viewStudentDetails(Student *students, int numStudents) {
     displayStudentFull(students + index);
 }
 
-/*
- * updateStudentInfo
- * -----------------
- * Updates a student's personal information (name, programme, year).
- * Provides a sub-menu for selecting which field to update.
- */
+// updateStudentInfo
+// Updates a student's personal information (name, programme, year).
 void updateStudentInfo(Student *students, int numStudents) {
     int id, index, choice, year;
     Student *s;
+
+    printf("\n--- Update Student Information ---\n");
+    if (numStudents == 0) {
+        printf("No students registered.\n");
+        return;
+    }
+
+    printf("Enter Student ID: ");
+    if (scanf("%d", &id) != 1) {
+        printf("Error: Invalid input.\n");
+        clearInputBuffer();
+        return;
+    }
+    clearInputBuffer();
+
+    index = searchByID(students, numStudents, id);
+    if (index == -1) {
+        printf("Error: Student with ID %d not found.\n", id);
+        return;
+    }
+
+    s = students + index;
+    printf("Current info: %s %s, Programme: %s, Year: %d\n",
+           s->firstName, s->lastName, s->programme, s->yearOfStudy);
 
     printf("\n--- Update Student Information ---\n");
     if (numStudents == 0) {
