@@ -1,44 +1,20 @@
-/*
- * ============================================================================
- * Project:     Student Academic Records and Performance Analytics System
- * File:        student_records.c
- * Description: A comprehensive menu-driven C program for managing student
- *              academic records and generating performance analytics.
- *              Demonstrates dynamic memory management (malloc, calloc,
- *              realloc, free), pointers, structures, file I/O, and manual
- *              implementations of search and sort algorithms.
- * Author:      Nkem Jeferson Achia
- * Course:      C Programming
- * Date:        2026
- * ============================================================================
- */
+// Student Academic Records and Performance Analytics System
+// Author: Nkem Jeferson Achia
 
 #include "student_records.h"
 
-/* ============================================================================
- *                              UTILITY FUNCTIONS
- * ============================================================================ */
+// UTILITY FUNCTIONS
 
-/*
- * clearInputBuffer
- * ----------------
- * Clears any remaining characters from stdin to prevent input issues
- * after using scanf.
- */
+// clearInputBuffer
+// Clears any remaining characters from stdin to prevent input issues
 void clearInputBuffer(void) {
     int c;
     while ((c = getchar()) != '\n' && c != EOF)
         ;
 }
 
-/*
- * strToLower
- * ----------
- * Converts a string to lowercase and stores the result in dest.
- * Parameters:
- *   dest - destination buffer (must be large enough)
- *   src  - source string
- */
+// strToLower
+// Converts a string to lowercase and stores the result in dest.
 void strToLower(char *dest, const char *src) {
     int i = 0;
     while (src[i] != '\0') {
@@ -48,12 +24,8 @@ void strToLower(char *dest, const char *src) {
     dest[i] = '\0';
 }
 
-/*
- * isDuplicateID
- * -------------
- * Checks whether a student ID already exists in the array.
- * Returns: 1 if duplicate found, 0 otherwise.
- */
+// isDuplicateID
+// Checks whether a student ID already exists in the array.
 int isDuplicateID(Student *students, int numStudents, int id) {
     int i;
     for (i = 0; i < numStudents; i++) {
@@ -64,12 +36,8 @@ int isDuplicateID(Student *students, int numStudents, int id) {
     return 0;
 }
 
-/*
- * calculateStudentAverage
- * -----------------------
- * Calculates the overall average percentage for a student across all courses.
- * Returns: average percentage (0-100), or 0.0 if student has no courses.
- */
+// calculateStudentAverage
+// Calculates the overall average percentage for a student across all courses.
 float calculateStudentAverage(Student *student) {
     int i;
     float totalPercentage = 0.0f;
@@ -88,11 +56,8 @@ float calculateStudentAverage(Student *student) {
     return totalPercentage / student->numCourses;
 }
 
-/*
- * displayStudentSummary
- * ---------------------
- * Prints a one-line summary of a student (for table display).
- */
+// displayStudentSummary
+// Prints a one-line summary of a student (for table display).
 void displayStudentSummary(Student *student) {
     float avg = calculateStudentAverage(student);
     printf("| %-8d | %-15s | %-15s | %-20s | %-4d | %-8d | %6.2f%% |\n",
@@ -105,11 +70,8 @@ void displayStudentSummary(Student *student) {
            avg);
 }
 
-/*
- * displayStudentFull
- * ------------------
- * Prints full details of a student including all course records.
- */
+// displayStudentFull
+// Prints full details of a student including all course records.
 void displayStudentFull(Student *student) {
     int i;
     float avg;
@@ -118,6 +80,24 @@ void displayStudentFull(Student *student) {
     printf("Student ID  : %d\n", student->studentID);
     printf("Name        : %s %s\n", student->firstName, student->lastName);
     printf("Programme   : %s\n", student->programme);
+    printf("Year of Study: %d\n", student->yearOfStudy);
+    printf("Courses     : %d\n", student->numCourses);
+
+    if (student->numCourses > 0) {
+        printf("\n  %-15s %-30s %10s %10s %8s\n",
+               "Code", "Course Name", "Marks", "Max", "Pct(%)");
+        printf("  ");
+        for (i = 0; i < 78; i++) printf("-");
+        printf("\n");
+
+        for (i = 0; i < student->numCourses; i++) {
+            CourseRecord *c = student->courses + i;
+            float pct = (c->maxMarks > 0) ? (c->marksObtained / c->maxMarks) * 100.0f : 0.0f;
+            printf("  %-15s %-30s %10.2f %10.2f %7.2f%%\n",
+                   c->courseCode, c->courseName,
+                   c->marksObtained, c->maxMarks, pct);
+        }
+    }
     printf("Year of Study: %d\n", student->yearOfStudy);
     printf("Courses     : %d\n", student->numCourses);
 
