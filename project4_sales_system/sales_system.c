@@ -118,95 +118,25 @@ void freeTransactions(Transaction **transactions, int *count, int *capacity) {
     }
     *count = 0;
     *capacity = 0;
-    if (*transactions == NULL) {
-        printf("[Error] Memory allocation failed! Cannot initialize transactions.\n");
-        return 0;
-    }
-
-    printf("[Info] Transaction system initialized (capacity: %d).\n", *capacity);
-    return 1;
 }
 
-/**
- * ensureCapacity - Checks if the array is full and doubles capacity using
- * realloc when needed. Preserves existing data.
- *
- * @param transactions  Pointer to the transaction array pointer
- * @param capacity      Pointer to current capacity (updated if resized)
- * @param count         Current number of transactions
- * @return              1 on success, 0 on allocation failure
- */
-int ensureCapacity(Transaction **transactions, int *capacity, int count) {
-    if (count < *capacity) {
-        return 1;  /* Still have room */
-    }
+// CRUD Operations
 
-    /* Double the capacity */
-    int newCapacity = (*capacity) * 2;
-    Transaction *temp = (Transaction *)realloc(*transactions,
-                                                sizeof(Transaction) * newCapacity);
-
-    if (temp == NULL) {
-        printf("[Error] Memory reallocation failed! Cannot expand array.\n");
-        return 0;
-    }
-
-    *transactions = temp;
-    *capacity = newCapacity;
-    printf("[Info] Array capacity expanded to %d.\n", newCapacity);
-    return 1;
-}
-
-/**
- * freeTransactions - Frees the dynamically allocated transaction array
- * and resets count and capacity to 0.
- *
- * @param transactions  Pointer to the transaction array pointer
- * @param count         Pointer to count (reset to 0)
- * @param capacity      Pointer to capacity (reset to 0)
- */
-void freeTransactions(Transaction **transactions, int *count, int *capacity) {
-    if (*transactions != NULL) {
-        free(*transactions);
-        *transactions = NULL;
-    }
-    *count = 0;
-    *capacity = 0;
-}
-
-/* ============================================================================
- * CRUD Operations
- * ============================================================================ */
-
-/**
- * displayTransaction - Displays a single transaction in a formatted row.
- *
- * @param t  Pointer to the transaction to display
- */
+// displayTransaction - Displays a single transaction in a formatted row.
 void displayTransaction(const Transaction *t) {
     printf("| %-5d | %-20s | %-8d | $%-9.2f | $%-11.2f | %-10s |\n",
            t->transactionID, t->productName, t->quantitySold,
            t->unitPrice, t->totalAmount, t->transactionDate);
 }
 
-/**
- * addTransaction - Prompts user for transaction details and adds a new
- * transaction to the array. Validates:
- *   - Unique transaction ID (no duplicates)
- *   - Positive quantity sold
- *   - Positive unit price
- * Automatically calculates totalAmount = quantitySold * unitPrice.
- *
- * @param transactions  Pointer to the transaction array pointer
- * @param count         Pointer to current transaction count
- * @param capacity      Pointer to current array capacity
- */
+// addTransaction - Prompts user for transaction details and adds a new
+// transaction to the array. Validates:
 void addTransaction(Transaction **transactions, int *count, int *capacity) {
     Transaction newTrans;
 
     printf("\n--- Add New Transaction ---\n");
 
-    /* Get and validate Transaction ID */
+    // Get and validate Transaction ID
     if (!getValidInt("Enter Transaction ID: ", &newTrans.transactionID)) return;
 
     if (newTrans.transactionID <= 0) {
@@ -214,20 +144,20 @@ void addTransaction(Transaction **transactions, int *count, int *capacity) {
         return;
     }
 
-    /* Check for duplicate ID */
+    // Check for duplicate ID
     if (searchByID(*transactions, *count, newTrans.transactionID) != -1) {
         printf("[Error] Transaction ID %d already exists. Duplicate IDs not allowed.\n",
                newTrans.transactionID);
         return;
     }
 
-    /* Get product name */
+    // Get product name
     printf("Enter Product Name: ");
     if (fgets(newTrans.productName, MAX_PRODUCT_NAME, stdin) == NULL) {
         printf("[Error] Failed to read product name.\n");
         return;
     }
-    /* Remove trailing newline */
+    // Remove trailing newline
     newTrans.productName[strcspn(newTrans.productName, "\n")] = '\0';
 
     if (strlen(newTrans.productName) == 0) {
@@ -235,7 +165,7 @@ void addTransaction(Transaction **transactions, int *count, int *capacity) {
         return;
     }
 
-    /* Get and validate quantity */
+    // Get and validate quantity
     if (!getValidInt("Enter Quantity Sold: ", &newTrans.quantitySold)) return;
 
     if (newTrans.quantitySold <= 0) {
@@ -243,7 +173,7 @@ void addTransaction(Transaction **transactions, int *count, int *capacity) {
         return;
     }
 
-    /* Get and validate unit price */
+    // Get and validate unit price
     if (!getValidFloat("Enter Unit Price: ", &newTrans.unitPrice)) return;
 
     if (newTrans.unitPrice <= 0.0f) {
@@ -251,10 +181,10 @@ void addTransaction(Transaction **transactions, int *count, int *capacity) {
         return;
     }
 
-    /* Calculate total amount */
+    // Calculate total amount
     newTrans.totalAmount = (float)newTrans.quantitySold * newTrans.unitPrice;
 
-    /* Get transaction date */
+    // Get transaction date
     printf("Enter Transaction Date (YYYY-MM-DD): ");
     if (fgets(newTrans.transactionDate, MAX_DATE_LEN, stdin) == NULL) {
         printf("[Error] Failed to read date.\n");
@@ -267,13 +197,13 @@ void addTransaction(Transaction **transactions, int *count, int *capacity) {
         return;
     }
 
-    /* Ensure array has capacity */
+    // Ensure array has capacity
     if (!ensureCapacity(transactions, capacity, *count)) {
         printf("[Error] Cannot add transaction — memory allocation failed.\n");
         return;
     }
 
-    /* Add the transaction to the array */
+    // Add the transaction to the array
     (*transactions)[*count] = newTrans;
     (*count)++;
 
@@ -281,13 +211,8 @@ void addTransaction(Transaction **transactions, int *count, int *capacity) {
            newTrans.transactionID, newTrans.totalAmount);
 }
 
-/**
- * displayAllTransactions - Displays all transactions in a formatted table.
- * Shows a message if no transactions exist.
- *
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- */
+// displayAllTransactions - Displays all transactions in a formatted table.
+// Shows a message if no transactions exist.
 void displayAllTransactions(Transaction *transactions, int count) {
     if (count == 0) {
         printf("\n[Info] No transactions to display.\n");
@@ -306,13 +231,8 @@ void displayAllTransactions(Transaction *transactions, int count) {
     printf("+-------+----------------------+----------+------------+--------------+------------+\n");
 }
 
-/**
- * updateTransaction - Finds a transaction by ID and allows the user to
- * update its fields. Recalculates totalAmount after changes.
- *
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- */
+// updateTransaction - Finds a transaction by ID and allows the user to
+// update its fields. Recalculates totalAmount after changes.
 void updateTransaction(Transaction *transactions, int count) {
     int id, index;
 
@@ -334,7 +254,7 @@ void updateTransaction(Transaction *transactions, int count) {
     printf("Current details:\n");
     displayTransaction(&transactions[index]);
 
-    /* Update product name */
+    // Update product name
     printf("\nEnter new Product Name (or press Enter to keep '%s'): ",
            transactions[index].productName);
     char buffer[MAX_PRODUCT_NAME];
@@ -345,7 +265,7 @@ void updateTransaction(Transaction *transactions, int count) {
         }
     }
 
-    /* Update quantity */
+    // Update quantity
     printf("Enter new Quantity Sold (or 0 to keep %d): ",
            transactions[index].quantitySold);
     int newQty;
@@ -356,7 +276,7 @@ void updateTransaction(Transaction *transactions, int count) {
     }
     clearInputBuffer();
 
-    /* Update unit price */
+    // Update unit price
     printf("Enter new Unit Price (or 0 to keep %.2f): ",
            transactions[index].unitPrice);
     float newPrice;
@@ -367,12 +287,67 @@ void updateTransaction(Transaction *transactions, int count) {
     }
     clearInputBuffer();
 
-    /* Update date */
+    // Update date
     printf("Enter new Date (YYYY-MM-DD) (or press Enter to keep '%s'): ",
            transactions[index].transactionDate);
     if (fgets(buffer, MAX_DATE_LEN, stdin) != NULL) {
         buffer[strcspn(buffer, "\n")] = '\0';
         if (strlen(buffer) > 0) {
+            strcpy(transactions[index].transactionDate, buffer);
+        }
+    }
+
+    // Recalculate total amount
+    transactions[index].totalAmount =
+        (float)transactions[index].quantitySold * transactions[index].unitPrice;
+
+    printf("[Success] Transaction ID %d updated. New Total: $%.2f\n",
+           id, transactions[index].totalAmount);
+}
+
+// deleteTransaction - Deletes a transaction by ID. Shifts remaining
+// elements left to fill the gap. Decrements count.
+void deleteTransaction(Transaction *transactions, int *count) {
+    int id, index;
+
+    if (*count == 0) {
+        printf("\n[Info] No transactions to delete.\n");
+        return;
+    }
+
+    printf("\n--- Delete Transaction ---\n");
+
+    if (!getValidInt("Enter Transaction ID to delete: ", &id)) return;
+
+    index = searchByID(transactions, *count, id);
+    if (index == -1) {
+        printf("[Error] Transaction ID %d not found.\n", id);
+        return;
+    }
+
+    // Show the transaction being deleted
+    printf("Deleting transaction:\n");
+    displayTransaction(&transactions[index]);
+
+    // Confirm deletion
+    printf("Are you sure? (y/n): ");
+    char confirm;
+    scanf(" %c", &confirm);
+    clearInputBuffer();
+
+    if (confirm != 'y' && confirm != 'Y') {
+        printf("[Info] Deletion cancelled.\n");
+        return;
+    }
+
+    // Shift elements left to fill the gap
+    for (int i = index; i < *count - 1; i++) {
+        transactions[i] = transactions[i + 1];
+    }
+
+    (*count)--;
+    printf("[Success] Transaction ID %d deleted. Remaining: %d transactions.\n",
+           id, *count);
             strcpy(transactions[index].transactionDate, buffer);
         }
     }
