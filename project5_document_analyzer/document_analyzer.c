@@ -158,3 +158,83 @@ void *processFile(void *arg)
                     int newCap = tArgs->maxMatchingLines * 2;
                     int *temp = (int *)realloc(tArgs->matchingLineNumbers,
                                                sizeof(int) * newCap);
+                    if (temp) {
+                        tArgs->matchingLineNumbers = temp;
+                        tArgs->maxMatchingLines = newCap;
+                    } else {
+                        fprintf(stderr, "[Thread %d] Warning: could not expand "
+                                "matching lines array.\n", tArgs->threadID);
+                    }
+                }
+
+                /* Store line number (matchingLines is already incremented) */
+                if (tArgs->matchingLines <= tArgs->maxMatchingLines) {
+                    tArgs->matchingLineNumbers[tArgs->matchingLines - 1] = lineNumber;
+                }
+            }
+        }
+    }
+
+    tArgs->totalLines = lineNumber;
+    fclose(fp);
+
+    /* Generate the report file for this document */
+    if (generateReport(tArgs) != 0) {
+        tArgs->status = STATUS_ERROR;
+        snprintf(tArgs->errorMessage, sizeof(tArgs->errorMessage),
+                 "Error: Failed to generate report for '%s'",
+                 tArgs->inputFilename);
+        fprintf(stderr, "[Thread %d] %s\n", tArgs->threadID, tArgs->errorMessage);
+        return NULL;
+    }
+
+    /* Mark as successfully completed */
+    tArgs->status = STATUS_SUCCESS;
+    printf("[Thread %d] Successfully processed %s\n",
+           tArgs->threadID, tArgs->inputFilename);
+
+    return NULL;
+}
+
+/* ============================= generateReport ============================= */
+
+/**
+ * generateReport — Write an analysis report file for one thread's results.
+ *
+ * Creates <inputFilename>_report.txt containing a formatted summary of
+ * the search results for the processed document.
+ */
+int generateReport(const ThreadArgs *args)
+{
+    /* Build the report filename: <inputFilename>_report.txt */
+    char reportFilename[512];
+    snprintf(reportFilename, sizeof(reportFilename),
+             "%s_report.txt", args->inputFilename);
+
+    FILE *fp = fopen(reportFilename, "w");
+    if (!fp) {
+        return -1;
+    }
+
+    /* Write report header */
+    fprintf(fp, "============================================================\n");
+    fprintf(fp, "       DOCUMENT ANALYSIS REPORT\n");
+    fprintf(fp, "============================================================\n\n");
+
+    /* File and keyword info */
+    fprintf(fp, "Input File:            %s\n", args->inputFilename);
+    fprintf(fp, "Search Keyword:        %s\n", args->keyword);
+    fprintf(fp, "------------------------------------------------------------\n\n");
+
+    /* Results summary */
+    fprintf(fp, "Total Lines Processed: %d\n", args->totalLines);
+    fprintf(fp, "Total Keyword Occurrences: %d\n", args->keywordCount);
+    fprintf(fp, "Number of Matching Lines:  %d\n", args->matchingLines);
+
+    /* List matching line numbers */
+    fprintf(fp, "\nMatching Line Numbers: ");
+    if (args->matchingLines > 0 && args->matchingLineNumbers) {
+        for (int i = 0; i < args->matchingLines; i++) {
+            if (i > 0) fprintf(fp, ", ");
+            fprintf(fp, "%d", args->matchingLineNumbers[i]);
+        }
