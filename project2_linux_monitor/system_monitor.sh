@@ -3,18 +3,16 @@
 ###############################################################################
 # Project Title : Linux System Health and Resource Monitoring Manager
 # Description   : An interactive Bash shell script that monitors system health
-#                 and resources on a Linux system. It provides real-time
-#                 information about CPU, memory, disk utilization, process
-#                 management, and generates comprehensive health reports.
+# and resources on a Linux system. It provides real-time
+# information about CPU, memory, disk utilization, process
+# management, and generates comprehensive health reports.
 # Author        : Nkem Jeferson Achia
 # Date          : 2026-11-21
 # Version       : 1.0
 # Usage         : chmod +x system_monitor.sh && ./system_monitor.sh
 ###############################################################################
 
-# =============================================================================
 # GLOBAL VARIABLES
-# =============================================================================
 
 # Directory where this script resides (used for log file location)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -36,16 +34,12 @@ CYAN='\033[0;36m'
 BOLD='\033[1m'
 NC='\033[0m'  # No Color / Reset
 
-# =============================================================================
 # UTILITY FUNCTIONS
-# =============================================================================
 
-# -----------------------------------------------------------------------------
 # log_activity()
 # Description : Records an action with a timestamp to the activity log file.
 # Parameters  : $1 — The activity message to log
 # Returns     : None
-# -----------------------------------------------------------------------------
 log_activity() {
     local message="$1"
     local timestamp
@@ -56,12 +50,10 @@ log_activity() {
     fi
 }
 
-# -----------------------------------------------------------------------------
 # validate_threshold()
 # Description : Validates that a threshold value is a number between 1 and 100.
 # Parameters  : $1 — The value to validate
 # Returns     : 0 if valid, 1 if invalid
-# -----------------------------------------------------------------------------
 validate_threshold() {
     local value="$1"
 
@@ -80,19 +72,12 @@ validate_threshold() {
     return 0
 }
 
-# -----------------------------------------------------------------------------
 # check_command()
 # Description : Checks if a required command is available on the system.
 # Parameters  : $1 — The command name to check
 # Returns     : 0 if available, 1 if missing
-# -----------------------------------------------------------------------------
 check_command() {
     local cmd="$1"
-    if ! command -v "${cmd}" &>/dev/null; then
-        echo -e "${YELLOW}Warning: '${cmd}' command not found. Some features may be limited.${NC}"
-        return 1
-    fi
-    return 0
 }
 
 # -----------------------------------------------------------------------------
