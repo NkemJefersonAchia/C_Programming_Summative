@@ -158,66 +158,18 @@ void initSystem(void) {
     Serial.println();
 
     // Initial display update
-    Serial.begin(SERIAL_BAUD_RATE);
-
-    /* Initialise the 16x2 LCD */
-    lcd.begin(16, 2);
-
-    /* --- Dynamically allocate the OccupancyInfo struct --- */
-    pOccupancy = (OccupancyInfo*)malloc(sizeof(OccupancyInfo));
-
-    /* Validate allocation */
-    if (pOccupancy == NULL) {
-        Serial.println(F("ERROR: malloc() failed — unable to allocate OccupancyInfo!"));
-        lcd.clear();
-        lcd.setCursor(0, 0);
-        lcd.print("MEMORY ERROR!");
-        lcd.setCursor(0, 1);
-        lcd.print("System halted.");
-        /* Turn both LEDs on to signal fault */
-        digitalWrite(GREEN_LED_PIN, HIGH);
-        digitalWrite(RED_LED_PIN, HIGH);
-        return;  /* loop() will check for NULL and skip */
-    }
-
-    /* Initialise struct fields via pointer */
-    pOccupancy->currentCount  = 0;
-    pOccupancy->maxCapacity   = MAX_CAPACITY;
-    pOccupancy->totalEntries  = 0;
-    pOccupancy->totalExits    = 0;
-
-    /* Print startup banner to Serial Monitor */
-    Serial.println(F("============================================================"));
-    Serial.println(F("  Smart Occupancy Monitoring and Access Control System"));
-    Serial.println(F("============================================================"));
-    Serial.print(F("  Max Capacity : "));
-    Serial.println(MAX_CAPACITY);
-    Serial.print(F("  System Start : "));
-    Serial.println(getTimestamp());
-    Serial.println(F("============================================================"));
-    Serial.println();
-
-    /* Initial display update */
     updateLCD(pOccupancy);
     updateLEDs(pOccupancy);
 }
 
-/* ===========================================================================
- * handleEntry() — Process an entry event.
- *
- * @param pOcc  Pointer to the OccupancyInfo struct.
- *
- * If currentCount < maxCapacity, increments currentCount and totalEntries,
- * then prints updated status to Serial. Otherwise, prints an error message
- * indicating the room is at full capacity.
- * =========================================================================== */
+// handleEntry() — Process an entry event.
 void handleEntry(OccupancyInfo* pOcc) {
     if (pOcc->currentCount < pOcc->maxCapacity) {
         pOcc->currentCount++;
         pOcc->totalEntries++;
         printStatus(pOcc, "ENTRY");
     } else {
-        /* Room is full — reject entry */
+        // Room is full — reject entry
         Serial.print("[");
         Serial.print(getTimestamp());
         Serial.print("] ");
@@ -230,14 +182,62 @@ void handleEntry(OccupancyInfo* pOcc) {
     }
 }
 
-/* ===========================================================================
- * handleExit() — Process an exit event.
- *
- * @param pOcc  Pointer to the OccupancyInfo struct.
- *
- * If currentCount > 0, decrements currentCount and increments totalExits,
- * then prints updated status to Serial. Otherwise, prints an error message
- * indicating the room is already empty.
+// handleExit() — Process an exit event.
+void handleExit(OccupancyInfo* pOcc) {
+    if (pOcc->currentCount > 0) {
+        pOcc->currentCount--;
+        pOcc->totalExits++;
+        printStatus(pOcc, "EXIT");
+    } else {
+        // Room is empty — reject exit
+        Serial.print("[");
+        Serial.print(getTimestamp());
+        Serial.print("] ");
+        Serial.println(F("ERROR: Exit REJECTED — room is already EMPTY!"));
+        Serial.print(F("       Current count: "));
+        Serial.print(pOcc->currentCount);
+        Serial.print(F("/"));
+        Serial.println(pOcc->maxCapacity);
+        Serial.println();
+    }
+}
+
+// updateLCD() — Refresh the 16x2 LCD with current occupancy data.
+void updateLCD(OccupancyInfo* pOcc) {
+    int available = pOcc->maxCapacity - pOcc->currentCount;
+
+    // Line 1: People count
+    lcd.setCursor(0, 0);
+    lcd.print("People:    ");      // Pad to clear previous digits
+    lcd.setCursor(8, 0);
+    lcd.print(pOcc->currentCount);
+    lcd.print("   ");              // Clear trailing characters
+
+    // Line 2: Available spots
+    lcd.setCursor(0, 1);
+    lcd.print("Available: ");
+    lcd.setCursor(11, 1);
+    lcd.print(available);
+    lcd.print("   ");              // Clear trailing characters
+}
+
+// updateLEDs() — Set LED states based on current occupancy.
+void updateLEDs(OccupancyInfo* pOcc) {
+    if (pOcc->currentCount >= pOcc->maxCapacity) {
+        // At full capacity
+        digitalWrite(GREEN_LED_PIN, LOW);
+        digitalWrite(RED_LED_PIN,   HIGH);
+    } else {
+        // Capacity available
+        digitalWrite(GREEN_LED_PIN, HIGH);
+        digitalWrite(RED_LED_PIN,   LOW);
+    }
+}
+
+// printStatus() — Print a formatted event log entry to the Serial Monitor.
+void printStatus(OccupancyInfo* pOcc, const char* event) {
+    int available = pOcc->maxCapacity - pOcc->currentCount;
+
  * =========================================================================== */
 void handleExit(OccupancyInfo* pOcc) {
     if (pOcc->currentCount > 0) {
