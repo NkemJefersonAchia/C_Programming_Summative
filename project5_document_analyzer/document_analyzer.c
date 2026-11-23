@@ -98,47 +98,24 @@ void *processFile(void *arg)
         tArgs->status = STATUS_ERROR;
         snprintf(tArgs->errorMessage, sizeof(tArgs->errorMessage),
                  "Error: Cannot open file '%s'", tArgs->inputFilename);
-}
-
-/* ============================== processFile =============================== */
-
-/**
- * processFile — Thread entry point that searches a single document.
- *
- * Opens the file, reads each line, searches for the keyword, tracks
- * occurrences and matching line numbers, then generates a report.
- * All results are stored in the thread's ThreadArgs struct.
- */
-void *processFile(void *arg)
-{
-    ThreadArgs *tArgs = (ThreadArgs *)arg;
-    char lineBuffer[MAX_LINE_LENGTH];
-    int lineNumber = 0;
-
-    /* Attempt to open the input file */
-    FILE *fp = fopen(tArgs->inputFilename, "r");
-    if (!fp) {
-        tArgs->status = STATUS_ERROR;
-        snprintf(tArgs->errorMessage, sizeof(tArgs->errorMessage),
-                 "Error: Cannot open file '%s'", tArgs->inputFilename);
         fprintf(stderr, "[Thread %d] %s\n", tArgs->threadID, tArgs->errorMessage);
         return NULL;
     }
 
-    /* Read the file line by line */
+    // Read the file line by line
     while (fgets(lineBuffer, sizeof(lineBuffer), fp) != NULL) {
         lineNumber++;
 
-        /* Search this line for keyword occurrences */
+        // Search this line for keyword occurrences
         int occurrences = searchLine(lineBuffer, tArgs->keyword);
 
         if (occurrences > 0) {
             tArgs->keywordCount += occurrences;
             tArgs->matchingLines++;
 
-            /* Store the matching line number, expanding array if needed */
+            // Store the matching line number, expanding array if needed
             if (tArgs->matchingLineNumbers) {
-                /* Grow the array if capacity is reached */
+                // Grow the array if capacity is reached
                 if (tArgs->matchingLines > tArgs->maxMatchingLines) {
                     int newCap = tArgs->maxMatchingLines * 2;
                     int *temp = (int *)realloc(tArgs->matchingLineNumbers,
@@ -152,7 +129,7 @@ void *processFile(void *arg)
                     }
                 }
 
-                /* Store line number (matchingLines is already incremented) */
+                // Store line number (matchingLines is already incremented)
                 if (tArgs->matchingLines <= tArgs->maxMatchingLines) {
                     tArgs->matchingLineNumbers[tArgs->matchingLines - 1] = lineNumber;
                 }
@@ -163,7 +140,7 @@ void *processFile(void *arg)
     tArgs->totalLines = lineNumber;
     fclose(fp);
 
-    /* Generate the report file for this document */
+    // Generate the report file for this document
     if (generateReport(tArgs) != 0) {
         tArgs->status = STATUS_ERROR;
         snprintf(tArgs->errorMessage, sizeof(tArgs->errorMessage),
@@ -173,7 +150,7 @@ void *processFile(void *arg)
         return NULL;
     }
 
-    /* Mark as successfully completed */
+    // Mark as successfully completed
     tArgs->status = STATUS_SUCCESS;
     printf("[Thread %d] Successfully processed %s\n",
            tArgs->threadID, tArgs->inputFilename);
@@ -181,17 +158,13 @@ void *processFile(void *arg)
     return NULL;
 }
 
-/* ============================= generateReport ============================= */
+// ============================= generateReport =============================
 
-/**
- * generateReport — Write an analysis report file for one thread's results.
- *
- * Creates <inputFilename>_report.txt containing a formatted summary of
- * the search results for the processed document.
- */
+// generateReport — Write an analysis report file for one thread's results.
+// Creates <inputFilename>_report.txt containing a formatted summary of
 int generateReport(const ThreadArgs *args)
 {
-    /* Build the report filename: <inputFilename>_report.txt */
+    // Build the report filename: <inputFilename>_report.txt
     char reportFilename[512];
     snprintf(reportFilename, sizeof(reportFilename),
              "%s_report.txt", args->inputFilename);
@@ -201,22 +174,22 @@ int generateReport(const ThreadArgs *args)
         return -1;
     }
 
-    /* Write report header */
+    // Write report header
     fprintf(fp, "============================================================\n");
     fprintf(fp, "       DOCUMENT ANALYSIS REPORT\n");
     fprintf(fp, "============================================================\n\n");
 
-    /* File and keyword info */
+    // File and keyword info
     fprintf(fp, "Input File:            %s\n", args->inputFilename);
     fprintf(fp, "Search Keyword:        %s\n", args->keyword);
     fprintf(fp, "------------------------------------------------------------\n\n");
 
-    /* Results summary */
+    // Results summary
     fprintf(fp, "Total Lines Processed: %d\n", args->totalLines);
     fprintf(fp, "Total Keyword Occurrences: %d\n", args->keywordCount);
     fprintf(fp, "Number of Matching Lines:  %d\n", args->matchingLines);
 
-    /* List matching line numbers */
+    // List matching line numbers
     fprintf(fp, "\nMatching Line Numbers: ");
     if (args->matchingLines > 0 && args->matchingLineNumbers) {
         for (int i = 0; i < args->matchingLines; i++) {
@@ -228,11 +201,33 @@ int generateReport(const ThreadArgs *args)
         fprintf(fp, "None\n");
     }
 
-    /* Processing status */
+    // Processing status
     fprintf(fp, "\n------------------------------------------------------------\n");
     fprintf(fp, "Processing Status:     %s\n",
             (args->status == STATUS_ERROR) ? "Failed" : "Success");
 
+    if (args->status == STATUS_ERROR && args->errorMessage[0] != '\0') {
+        fprintf(fp, "Error Details:         %s\n", args->errorMessage);
+    }
+
+    fprintf(fp, "============================================================\n");
+
+    fclose(fp);
+    return 0;
+}
+
+// ============================ displaySummary ==============================
+
+// displaySummary — Print the final processing summary to stdout.
+// Shows per-file results including occurrence count and matching lines,
+void displaySummary(ThreadArgs *allArgs[], int numFiles)
+{
+    printf("\n===== PROCESSING SUMMARY =====\n\n");
+
+    for (int i = 0; i < numFiles; i++) {
+        if (allArgs[i]->status == STATUS_SUCCESS) {
+            printf("%s: Completed - %d occurrences found in %d lines\n",
+                   allArgs[i]->inputFilename,
     if (args->status == STATUS_ERROR && args->errorMessage[0] != '\0') {
         fprintf(fp, "Error Details:         %s\n", args->errorMessage);
     }
