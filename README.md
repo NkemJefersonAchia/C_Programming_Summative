@@ -156,7 +156,7 @@ A multi-threaded document search and analysis system that processes multiple tex
 **How to Compile and Run:**
 ```bash
 gcc -Wall -Wextra -pthread -o document_analyzer project5_document_analyzer/document_analyzer.c
-./document_analyzer "IoT" project5_document_analyzer/sample_document1.txt project5_document_analyzer/sample_document2.txt project5_document_analyzer/sample_document3.txt
+./document_analyzer "Cameroon" project5_document_analyzer/sample_document1.txt project5_document_analyzer/sample_document2.txt project5_document_analyzer/sample_document3.txt
 ```
 
 📁 [View Project](project5_document_analyzer/)
