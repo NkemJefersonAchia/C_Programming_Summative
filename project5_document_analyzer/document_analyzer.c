@@ -93,3 +93,68 @@ void initThreadArgs(ThreadArgs *args, const char *filename,
 
 /* =============================== searchLine =============================== */
 
+/**
+ * searchLine — Count case-insensitive occurrences of keyword in a line.
+ *
+ * Scans through the line, advancing past each found occurrence to count
+ * all non-overlapping matches.
+ */
+int searchLine(const char *line, const char *keyword)
+{
+    int count = 0;
+    size_t keyLen = strlen(keyword);
+
+    if (keyLen == 0) return 0;
+
+    const char *pos = line;
+    while ((pos = caseInsensitiveStrstr(pos, keyword)) != NULL) {
+        count++;
+        pos += keyLen;  /* Move past this occurrence */
+    }
+
+    return count;
+}
+
+/* ============================== processFile =============================== */
+
+/**
+ * processFile — Thread entry point that searches a single document.
+ *
+ * Opens the file, reads each line, searches for the keyword, tracks
+ * occurrences and matching line numbers, then generates a report.
+ * All results are stored in the thread's ThreadArgs struct.
+ */
+void *processFile(void *arg)
+{
+    ThreadArgs *tArgs = (ThreadArgs *)arg;
+    char lineBuffer[MAX_LINE_LENGTH];
+    int lineNumber = 0;
+
+    /* Attempt to open the input file */
+    FILE *fp = fopen(tArgs->inputFilename, "r");
+    if (!fp) {
+        tArgs->status = STATUS_ERROR;
+        snprintf(tArgs->errorMessage, sizeof(tArgs->errorMessage),
+                 "Error: Cannot open file '%s'", tArgs->inputFilename);
+        fprintf(stderr, "[Thread %d] %s\n", tArgs->threadID, tArgs->errorMessage);
+        return NULL;
+    }
+
+    /* Read the file line by line */
+    while (fgets(lineBuffer, sizeof(lineBuffer), fp) != NULL) {
+        lineNumber++;
+
+        /* Search this line for keyword occurrences */
+        int occurrences = searchLine(lineBuffer, tArgs->keyword);
+
+        if (occurrences > 0) {
+            tArgs->keywordCount += occurrences;
+            tArgs->matchingLines++;
+
+            /* Store the matching line number, expanding array if needed */
+            if (tArgs->matchingLineNumbers) {
+                /* Grow the array if capacity is reached */
+                if (tArgs->matchingLines > tArgs->maxMatchingLines) {
+                    int newCap = tArgs->maxMatchingLines * 2;
+                    int *temp = (int *)realloc(tArgs->matchingLineNumbers,
+                                               sizeof(int) * newCap);
