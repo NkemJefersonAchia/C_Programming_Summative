@@ -348,85 +348,12 @@ void deleteTransaction(Transaction *transactions, int *count) {
     (*count)--;
     printf("[Success] Transaction ID %d deleted. Remaining: %d transactions.\n",
            id, *count);
-            strcpy(transactions[index].transactionDate, buffer);
-        }
-    }
-
-    /* Recalculate total amount */
-    transactions[index].totalAmount =
-        (float)transactions[index].quantitySold * transactions[index].unitPrice;
-
-    printf("[Success] Transaction ID %d updated. New Total: $%.2f\n",
-           id, transactions[index].totalAmount);
 }
 
-/**
- * deleteTransaction - Deletes a transaction by ID. Shifts remaining
- * elements left to fill the gap. Decrements count.
- *
- * @param transactions  Array of transactions
- * @param count         Pointer to current transaction count (decremented)
- */
-void deleteTransaction(Transaction *transactions, int *count) {
-    int id, index;
+// Sales Processing Functions (Function Pointer Demonstration)
+// Each function below matches the SalesProcessor signature:
 
-    if (*count == 0) {
-        printf("\n[Info] No transactions to delete.\n");
-        return;
-    }
-
-    printf("\n--- Delete Transaction ---\n");
-
-    if (!getValidInt("Enter Transaction ID to delete: ", &id)) return;
-
-    index = searchByID(transactions, *count, id);
-    if (index == -1) {
-        printf("[Error] Transaction ID %d not found.\n", id);
-        return;
-    }
-
-    /* Show the transaction being deleted */
-    printf("Deleting transaction:\n");
-    displayTransaction(&transactions[index]);
-
-    /* Confirm deletion */
-    printf("Are you sure? (y/n): ");
-    char confirm;
-    scanf(" %c", &confirm);
-    clearInputBuffer();
-
-    if (confirm != 'y' && confirm != 'Y') {
-        printf("[Info] Deletion cancelled.\n");
-        return;
-    }
-
-    /* Shift elements left to fill the gap */
-    for (int i = index; i < *count - 1; i++) {
-        transactions[i] = transactions[i + 1];
-    }
-
-    (*count)--;
-    printf("[Success] Transaction ID %d deleted. Remaining: %d transactions.\n",
-           id, *count);
-}
-
-/* ============================================================================
- * Sales Processing Functions (Function Pointer Demonstration)
- *
- * Each function below matches the SalesProcessor signature:
- *   float function_name(Transaction *transactions, int count);
- *
- * These are stored in an array of function pointers and selected at runtime
- * based on user choice — demonstrating the power of function pointers.
- * ============================================================================ */
-
-/**
- * calculateTotalRevenue - Sums all totalAmount values across transactions.
- *
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- * @return              Total revenue (sum of all totalAmounts)
- */
+// calculateTotalRevenue - Sums all totalAmount values across transactions.
 float calculateTotalRevenue(Transaction *transactions, int count) {
     float total = 0.0f;
     for (int i = 0; i < count; i++) {
@@ -435,26 +362,14 @@ float calculateTotalRevenue(Transaction *transactions, int count) {
     return total;
 }
 
-/**
- * calculateAverageValue - Computes the average totalAmount per transaction.
- * Handles division by zero by returning 0 when count is 0.
- *
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- * @return              Average totalAmount value
- */
+// calculateAverageValue - Computes the average totalAmount per transaction.
+// Handles division by zero by returning 0 when count is 0.
 float calculateAverageValue(Transaction *transactions, int count) {
-    if (count == 0) return 0.0f;  /* Avoid division by zero */
+    if (count == 0) return 0.0f;  // Avoid division by zero
     return calculateTotalRevenue(transactions, count) / (float)count;
 }
 
-/**
- * findHighestTransaction - Finds and returns the highest totalAmount.
- *
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- * @return              Highest totalAmount value (0 if no transactions)
- */
+// findHighestTransaction - Finds and returns the highest totalAmount.
 float findHighestTransaction(Transaction *transactions, int count) {
     if (count == 0) return 0.0f;
 
@@ -467,13 +382,7 @@ float findHighestTransaction(Transaction *transactions, int count) {
     return highest;
 }
 
-/**
- * findLowestTransaction - Finds and returns the lowest totalAmount.
- *
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- * @return              Lowest totalAmount value (0 if no transactions)
- */
+// findLowestTransaction - Finds and returns the lowest totalAmount.
 float findLowestTransaction(Transaction *transactions, int count) {
     if (count == 0) return 0.0f;
 
@@ -486,13 +395,7 @@ float findLowestTransaction(Transaction *transactions, int count) {
     return lowest;
 }
 
-/**
- * calculateTotalUnitsSold - Sums all quantitySold values.
- *
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- * @return              Total units sold (as float for SalesProcessor compatibility)
- */
+// calculateTotalUnitsSold - Sums all quantitySold values.
 float calculateTotalUnitsSold(Transaction *transactions, int count) {
     float totalUnits = 0.0f;
     for (int i = 0; i < count; i++) {
@@ -501,34 +404,26 @@ float calculateTotalUnitsSold(Transaction *transactions, int count) {
     return totalUnits;
 }
 
-/**
- * processSalesData - Menu option 5: Demonstrates function pointers.
- *
- * Creates an array of SalesProcessor function pointers, lets the user choose
- * an operation, assigns the corresponding function to a pointer variable,
- * and calls it. This is the core function pointer demonstration.
- *
- * @param transactions  Array of transactions
- * @param count         Number of transactions
- */
+// processSalesData - Menu option 5: Demonstrates function pointers.
+// Creates an array of SalesProcessor function pointers, lets the user choose
 void processSalesData(Transaction *transactions, int count) {
     if (count == 0) {
         printf("\n[Info] No transactions to process.\n");
         return;
     }
 
-    /* ---- Array of function pointers ---- */
-    /* Each element is a SalesProcessor (function pointer) pointing to one of
-       our processing functions. The user's choice indexes into this array. */
+    // ---- Array of function pointers ----
+    // Each element is a SalesProcessor (function pointer) pointing to one of
+// our processing functions. The user's choice indexes into this array.
     SalesProcessor processors[] = {
-        calculateTotalRevenue,       /* Index 0 */
-        calculateAverageValue,       /* Index 1 */
-        findHighestTransaction,      /* Index 2 */
-        findLowestTransaction,       /* Index 3 */
-        calculateTotalUnitsSold      /* Index 4 */
+        calculateTotalRevenue,       // Index 0
+        calculateAverageValue,       // Index 1
+        findHighestTransaction,      // Index 2
+        findLowestTransaction,       // Index 3
+        calculateTotalUnitsSold      // Index 4
     };
 
-    /* Labels for display */
+    // Labels for display
     const char *labels[] = {
         "Total Revenue",
         "Average Transaction Value",
@@ -553,16 +448,106 @@ void processSalesData(Transaction *transactions, int count) {
         return;
     }
 
-    /* ---- Function pointer assignment and invocation ---- */
-    /* Assign the selected function to a SalesProcessor function pointer */
+    // ---- Function pointer assignment and invocation ----
+    // Assign the selected function to a SalesProcessor function pointer
     SalesProcessor selectedProcessor = processors[choice - 1];
 
-    /* Call the function through the function pointer */
+    // Call the function through the function pointer
     float result = selectedProcessor(transactions, count);
 
     printf("\n>> %s: $%.2f\n", labels[choice - 1], result);
 }
 
+// Callback / Filter Functions (Callback Demonstration)
+// Each filter function matches the TransactionFilter signature:
+
+// filterByMinAmount - Callback: returns 1 if the transaction's totalAmount
+// is greater than or equal to the threshold value.
+int filterByMinAmount(Transaction *t, void *criteria) {
+    float threshold = *(float *)criteria;
+    return (t->totalAmount >= threshold) ? 1 : 0;
+}
+
+// filterByProduct - Callback: returns 1 if the transaction's product name
+// matches the given product name (case-insensitive comparison).
+int filterByProduct(Transaction *t, void *criteria) {
+    char *productName = (char *)criteria;
+
+    // Case-insensitive comparison
+    char lower1[MAX_PRODUCT_NAME], lower2[MAX_PRODUCT_NAME];
+    toLowerStr(lower1, t->productName);
+    toLowerStr(lower2, productName);
+
+    return (strcmp(lower1, lower2) == 0) ? 1 : 0;
+}
+
+// countByCriteria - Counts how many transactions match a given filter callback.
+// Demonstrates passing a callback function as a parameter.
+int countByCriteria(Transaction *transactions, int count,
+                    TransactionFilter filter, void *criteria) {
+    int matches = 0;
+    for (int i = 0; i < count; i++) {
+        // Call the callback function for each transaction
+        if (filter(&transactions[i], criteria)) {
+            matches++;
+        }
+    }
+    return matches;
+}
+
+// applyFilter - Applies a callback filter function to all transactions
+// and displays those that match. This is the core callback demonstration:
+void applyFilter(Transaction *transactions, int count,
+                 TransactionFilter filter, void *criteria) {
+    int found = 0;
+
+    printf("\n--- Filtered Results ---\n");
+    printf("+-------+----------------------+----------+------------+--------------+------------+\n");
+    printf("| ID    | Product              | Quantity | Unit Price | Total Amount | Date       |\n");
+    printf("+-------+----------------------+----------+------------+--------------+------------+\n");
+
+    for (int i = 0; i < count; i++) {
+        // Call the callback function — this is the callback in action
+        if (filter(&transactions[i], criteria)) {
+            displayTransaction(&transactions[i]);
+            found++;
+        }
+    }
+
+    printf("+-------+----------------------+----------+------------+--------------+------------+\n");
+
+    if (found == 0) {
+        printf("[Info] No transactions matched the filter criteria.\n");
+    } else {
+        printf("[Info] %d transaction(s) matched.\n", found);
+    }
+
+    // Also demonstrate countByCriteria using the same callback
+    int totalMatch = countByCriteria(transactions, count, filter, criteria);
+    printf("[Info] countByCriteria() confirms: %d matching transaction(s).\n", totalMatch);
+}
+
+// filterTransactionsMenu - Menu option 6: Demonstrates callback functions.
+// Lets the user choose a filter type (by minimum amount or by product name),
+void filterTransactionsMenu(Transaction *transactions, int count) {
+    if (count == 0) {
+        printf("\n[Info] No transactions to filter.\n");
+        return;
+    }
+
+    printf("\n--- Filter Transactions (Callbacks) ---\n");
+    printf("1. Filter by Minimum Amount\n");
+    printf("2. Filter by Product Name\n");
+
+    int choice;
+    if (!getValidInt("Enter choice: ", &choice)) return;
+
+    switch (choice) {
+        case 1: {
+            float threshold;
+            if (!getValidFloat("Enter minimum amount threshold: $", &threshold)) return;
+
+            // Pass filterByMinAmount as a CALLBACK to applyFilter
 /* ============================================================================
  * Callback / Filter Functions (Callback Demonstration)
  *
