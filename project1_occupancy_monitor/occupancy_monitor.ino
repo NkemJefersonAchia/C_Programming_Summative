@@ -93,71 +93,71 @@ void loop() {
             handleExit(pOccupancy);
             lastExitPressTime = currentMillis;
         }
- * =========================================================================== */
-void setup() {
-    initSystem();
-}
-
-/* ===========================================================================
- * loop() — Main program loop. Reads buttons, updates outputs. No delay().
- * =========================================================================== */
-void loop() {
-    /* Safety check: if allocation failed, do nothing */
-    if (pOccupancy == NULL) {
-        return;
-    }
-
-    unsigned long currentMillis = millis();
-
-    /* --- Read button states (active LOW with INPUT_PULLUP) --- */
-    int entryReading = digitalRead(ENTRY_BUTTON_PIN);
-    int exitReading  = digitalRead(EXIT_BUTTON_PIN);
-
-    /* --- Entry button: detect falling edge with debounce --- */
-    if (entryReading == LOW && prevEntryState == HIGH) {
-        if ((currentMillis - lastEntryPressTime) >= DEBOUNCE_DELAY) {
-            handleEntry(pOccupancy);
-            lastEntryPressTime = currentMillis;
-        }
-    }
-    prevEntryState = entryReading;
-
-    /* --- Exit button: detect falling edge with debounce --- */
-    if (exitReading == LOW && prevExitState == HIGH) {
-        if ((currentMillis - lastExitPressTime) >= DEBOUNCE_DELAY) {
-            handleExit(pOccupancy);
-            lastExitPressTime = currentMillis;
-        }
     }
     prevExitState = exitReading;
 
-    /* --- Periodically refresh the LCD (every LCD_UPDATE_INTERVAL ms) --- */
+    // --- Periodically refresh the LCD (every LCD_UPDATE_INTERVAL ms) ---
     if ((currentMillis - lastLCDUpdateTime) >= LCD_UPDATE_INTERVAL) {
         updateLCD(pOccupancy);
         lastLCDUpdateTime = currentMillis;
     }
 
-    /* --- Continuously update LEDs to reflect current state --- */
+    // --- Continuously update LEDs to reflect current state ---
     updateLEDs(pOccupancy);
 }
 
-/* ===========================================================================
- * initSystem() — Initialise all peripherals and allocate occupancy struct.
- *
- * Configures pin modes, starts Serial and LCD, dynamically allocates the
- * OccupancyInfo struct via malloc(), validates the allocation, and performs
- * the first LCD + LED update.
- * =========================================================================== */
+// initSystem() — Initialise all peripherals and allocate occupancy struct.
+// Configures pin modes, starts Serial and LCD, dynamically allocates the
 void initSystem(void) {
-    /* Configure button pins with internal pull-up resistors */
+    // Configure button pins with internal pull-up resistors
     pinMode(ENTRY_BUTTON_PIN, INPUT_PULLUP);
     pinMode(EXIT_BUTTON_PIN,  INPUT_PULLUP);
 
-    /* Configure LED pins as outputs */
+    // Configure LED pins as outputs
     pinMode(GREEN_LED_PIN, OUTPUT);
     pinMode(RED_LED_PIN,   OUTPUT);
 
-    /* Start serial communication */
+    // Start serial communication
+    Serial.begin(SERIAL_BAUD_RATE);
+
+    // Initialise the 16x2 LCD
+    lcd.begin(16, 2);
+
+    // --- Dynamically allocate the OccupancyInfo struct ---
+    pOccupancy = (OccupancyInfo*)malloc(sizeof(OccupancyInfo));
+
+    // Validate allocation
+    if (pOccupancy == NULL) {
+        Serial.println(F("ERROR: malloc() failed — unable to allocate OccupancyInfo!"));
+        lcd.clear();
+        lcd.setCursor(0, 0);
+        lcd.print("MEMORY ERROR!");
+        lcd.setCursor(0, 1);
+        lcd.print("System halted.");
+        // Turn both LEDs on to signal fault
+        digitalWrite(GREEN_LED_PIN, HIGH);
+        digitalWrite(RED_LED_PIN, HIGH);
+        return;  // loop() will check for NULL and skip
+    }
+
+    // Initialise struct fields via pointer
+    pOccupancy->currentCount  = 0;
+    pOccupancy->maxCapacity   = MAX_CAPACITY;
+    pOccupancy->totalEntries  = 0;
+    pOccupancy->totalExits    = 0;
+
+    // Print startup banner to Serial Monitor
+    Serial.println(F("============================================================"));
+    Serial.println(F("  Smart Occupancy Monitoring and Access Control System"));
+    Serial.println(F("============================================================"));
+    Serial.print(F("  Max Capacity : "));
+    Serial.println(MAX_CAPACITY);
+    Serial.print(F("  System Start : "));
+    Serial.println(getTimestamp());
+    Serial.println(F("============================================================"));
+    Serial.println();
+
+    // Initial display update
     Serial.begin(SERIAL_BAUD_RATE);
 
     /* Initialise the 16x2 LCD */
