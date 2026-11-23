@@ -23,3 +23,8 @@ Thumbs.db
 # IDE files
 .vscode/
 .idea/
+
+# macOS specific
+.Spotlight-V100
+.Trashes
+*.dSYM
