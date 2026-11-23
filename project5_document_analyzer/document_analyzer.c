@@ -308,3 +308,116 @@ void cleanupThreadArgs(ThreadArgs *args)
 }
 
 /* =============================== printUsage =============================== */
+
+/**
+ * printUsage — Print usage information to stderr.
+ *
+ * Shows correct command-line syntax and an example invocation.
+ */
+void printUsage(const char *programName)
+{
+    fprintf(stderr, "\nUsage: %s \"keyword\" file1.txt [file2.txt ...]\n\n",
+            programName);
+    fprintf(stderr, "Arguments:\n");
+    fprintf(stderr, "  keyword    The word to search for (case-insensitive)\n");
+    fprintf(stderr, "  file(s)    One or more text files to search\n\n");
+    fprintf(stderr, "Example:\n");
+    fprintf(stderr, "  %s \"IoT\" document1.txt document2.txt document3.txt\n\n",
+            programName);
+}
+
+/* ================================== main ================================== */
+
+/**
+ * main — Entry point for the multi-threaded document analyzer.
+ *
+ * Validates command-line arguments, initialises per-file ThreadArgs,
+ * spawns one POSIX thread per file, joins all threads, prints the
+ * summary, and cleans up allocated resources.
+ */
+int main(int argc, char *argv[])
+{
+    /* ---- Validate command-line arguments ---- */
+    if (argc < 3) {
+        fprintf(stderr, "Error: Insufficient arguments.\n");
+        printUsage(argv[0]);
+        return EXIT_FAILURE;
+    }
+
+    const char *keyword  = argv[1];
+    int         numFiles = argc - 2;  /* Remaining args are file paths */
+
+    /* Enforce maximum file limit */
+    if (numFiles > MAX_FILES) {
+        fprintf(stderr, "Error: Too many files. Maximum supported: %d\n",
+                MAX_FILES);
+        return EXIT_FAILURE;
+    }
+
+    /* ---- Display banner ---- */
+    printf("\n===== MULTI-THREADED DOCUMENT ANALYZER =====\n\n");
+    printf("Search Keyword: %s\n", keyword);
+    printf("Number of Input Files: %d\n\n", numFiles);
+
+    /* ---- Allocate ThreadArgs and pthread_t arrays ---- */
+    ThreadArgs *argsArray[MAX_FILES];
+    pthread_t   threads[MAX_FILES];
+    int         threadCreated[MAX_FILES];  /* Track which threads were created */
+
+    /* Initialise each ThreadArgs struct */
+    for (int i = 0; i < numFiles; i++) {
+        argsArray[i] = (ThreadArgs *)malloc(sizeof(ThreadArgs));
+        if (!argsArray[i]) {
+            fprintf(stderr, "Error: Memory allocation failed for thread %d.\n",
+                    i + 1);
+            /* Clean up previously allocated structs */
+            for (int j = 0; j < i; j++) {
+                cleanupThreadArgs(argsArray[j]);
+                free(argsArray[j]);
+            }
+            return EXIT_FAILURE;
+        }
+        initThreadArgs(argsArray[i], argv[i + 2], keyword, i + 1);
+        threadCreated[i] = 0;  /* Not yet created */
+    }
+
+    /* ---- Create one thread per input file ---- */
+    for (int i = 0; i < numFiles; i++) {
+        printf("[Thread %d] Processing %s ...\n",
+               argsArray[i]->threadID, argsArray[i]->inputFilename);
+
+        int rc = pthread_create(&threads[i], NULL, processFile, argsArray[i]);
+        if (rc != 0) {
+            fprintf(stderr, "[Thread %d] Error: Failed to create thread "
+                    "(error code %d). Skipping file '%s'.\n",
+                    argsArray[i]->threadID, rc, argsArray[i]->inputFilename);
+            argsArray[i]->status = STATUS_ERROR;
+            snprintf(argsArray[i]->errorMessage,
+                     sizeof(argsArray[i]->errorMessage),
+                     "Thread creation failed (error code %d)", rc);
+            threadCreated[i] = 0;
+        } else {
+            threadCreated[i] = 1;
+        }
+    }
+
+    printf("\n");
+
+    /* ---- Join all successfully created threads ---- */
+    for (int i = 0; i < numFiles; i++) {
+        if (threadCreated[i]) {
+            pthread_join(threads[i], NULL);
+        }
+    }
+
+    /* ---- Display final summary ---- */
+    displaySummary(argsArray, numFiles);
+
+    /* ---- Clean up all allocated resources ---- */
+    for (int i = 0; i < numFiles; i++) {
+        cleanupThreadArgs(argsArray[i]);
+        free(argsArray[i]);
+    }
+
+    return EXIT_SUCCESS;
+}
