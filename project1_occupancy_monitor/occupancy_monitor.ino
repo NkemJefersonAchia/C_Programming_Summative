@@ -1,3 +1,4 @@
+// Smart Occupancy Monitor - Arduino Uno
 /*
  * ============================================================================
  * Project:     Smart Occupancy Monitoring and Access Control System
