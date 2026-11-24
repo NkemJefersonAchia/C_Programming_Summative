@@ -37,7 +37,7 @@ The script uses standard Linux commands that are available on most distributions
 | `hostname`| Display system hostname          |
 | `uptime`  | System uptime                    |
 | `top`     | CPU usage (batch mode)           |
-| `free`    | Memory usage statistics          |
+| `free` / `vm_stat` | Memory usage statistics (Linux / macOS) |
 | `df`      | Disk filesystem usage            |
 | `ps`      | Process listing                  |
 | `kill`    | Process termination              |
@@ -91,7 +91,7 @@ When the script runs, it presents an interactive menu:
 |--------|-----------------------------|-------------|
 | **1**  | Display System Information  | Shows hostname, full OS info (`uname -a`), kernel version, system uptime, and current date/time. |
 | **2**  | Monitor CPU Utilization     | Displays CPU usage summary, lists the top 10 CPU-consuming processes, and allows setting a custom CPU warning threshold (1–100%). |
-| **3**  | Monitor Memory Utilization  | Shows total, used, and available memory using `free -h`, calculates usage percentage, and warns if usage exceeds the user-defined threshold. |
+| **3**  | Monitor Memory Utilization  | Shows total, used, and available memory (using `free -h` on Linux or `vm_stat`/`sysctl` on macOS), calculates usage percentage, and warns if usage exceeds the user-defined threshold. |
 | **4**  | Monitor Disk Utilization    | Displays disk space for all filesystems using `df -h`, highlights any filesystem at or above the usage threshold, and allows threshold customization. |
 | **5**  | View & Search Processes     | Provides three sub-options: list all processes sorted by CPU, search by process name, or look up a specific PID. Displays PID, CPU%, MEM%, and command. |
 | **6**  | Terminate a Process         | Prompts for a PID, shows process details, asks for confirmation, then terminates the process. Blocks termination of system-critical PIDs (< 100) and handles permission errors. |

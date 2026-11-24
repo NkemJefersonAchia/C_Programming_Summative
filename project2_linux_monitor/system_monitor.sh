@@ -231,7 +231,7 @@ monitor_memory() {
     echo -e "${BOLD}${BLUE}        MEMORY UTILIZATION MONITOR${NC}"
     print_separator
 
-    if check_command free; then
+    if command -v free &>/dev/null; then
         echo -e "${GREEN}Memory Information:${NC}"
         free -h 2>/dev/null
         echo ""
@@ -260,30 +260,64 @@ monitor_memory() {
                 fi
             fi
         fi
-    else
-        # Fallback: try /proc/meminfo (Linux-specific)
-        if [[ -f /proc/meminfo ]]; then
-            echo -e "${GREEN}Memory Information (from /proc/meminfo):${NC}"
-            local total_kb free_kb available_kb
-            total_kb=$(grep -i "MemTotal" /proc/meminfo | awk '{print $2}')
-            free_kb=$(grep -i "MemFree" /proc/meminfo | awk '{print $2}')
-            available_kb=$(grep -i "MemAvailable" /proc/meminfo | awk '{print $2}')
+    elif [[ -f /proc/meminfo ]]; then
+        # Fallback: try /proc/meminfo (Linux-specific without free command)
+        echo -e "${GREEN}Memory Information (from /proc/meminfo):${NC}"
+        local total_kb free_kb available_kb
+        total_kb=$(grep -i "MemTotal" /proc/meminfo | awk '{print $2}')
+        free_kb=$(grep -i "MemFree" /proc/meminfo | awk '{print $2}')
+        available_kb=$(grep -i "MemAvailable" /proc/meminfo | awk '{print $2}')
+        [[ -z "${available_kb}" ]] && available_kb="${free_kb}"
 
-            echo "  Total:     $((total_kb / 1024)) MB"
-            echo "  Free:      $((free_kb / 1024)) MB"
-            echo "  Available: $((available_kb / 1024)) MB"
+        local total_mb=$((total_kb / 1024))
+        local avail_mb=$((available_kb / 1024))
+        local used_mb=$((total_mb - avail_mb))
 
-            if [[ "${total_kb}" -gt 0 ]] 2>/dev/null; then
-                local used_kb=$((total_kb - available_kb))
-                local usage_pct=$(( (used_kb * 100) / total_kb ))
-                echo -e "  ${GREEN}Usage:${NC} ${usage_pct}%"
-                if [[ "${usage_pct}" -ge "${MEMORY_THRESHOLD}" ]]; then
-                    echo -e "  ${RED}⚠  WARNING: Memory usage (${usage_pct}%) exceeds threshold (${MEMORY_THRESHOLD}%)!${NC}"
-                fi
+        echo "  Total:     ${total_mb} MB"
+        echo "  Used:      ${used_mb} MB"
+        echo "  Available: ${avail_mb} MB"
+
+        if [[ "${total_kb}" -gt 0 ]] 2>/dev/null; then
+            local usage_pct=$(( (used_mb * 100) / total_mb ))
+            echo -e "  ${GREEN}Usage:${NC} ${usage_pct}%"
+            if [[ "${usage_pct}" -ge "${MEMORY_THRESHOLD}" ]]; then
+                echo -e "  ${RED}⚠  WARNING: Memory usage (${usage_pct}%) exceeds threshold (${MEMORY_THRESHOLD}%)!${NC}"
+            fi
+        fi
+    elif command -v vm_stat &>/dev/null && command -v sysctl &>/dev/null; then
+        # macOS fallback using vm_stat and sysctl
+        echo -e "${GREEN}Memory Information (macOS):${NC}"
+        local page_size free_pages spec_pages total_bytes avail_bytes
+        page_size=$(vm_stat 2>/dev/null | grep -o "page size of [0-9]*" | awk '{print $4}')
+        [[ -z "${page_size}" ]] && page_size=4096
+        free_pages=$(vm_stat 2>/dev/null | awk '/Pages free/ {gsub(/\./, "", $3); print $3}')
+        spec_pages=$(vm_stat 2>/dev/null | awk '/Pages speculative/ {gsub(/\./, "", $3); print $3}')
+        free_pages=${free_pages:-0}
+        spec_pages=${spec_pages:-0}
+        total_bytes=$(sysctl -n hw.memsize 2>/dev/null)
+
+        if [[ -n "${total_bytes}" && "${total_bytes}" -gt 0 ]] 2>/dev/null; then
+            local total_mb=$(( total_bytes / 1024 / 1024 ))
+            avail_bytes=$(( (free_pages + spec_pages) * page_size ))
+            local avail_mb=$(( avail_bytes / 1024 / 1024 ))
+            local used_mb=$(( total_mb - avail_mb ))
+            local usage_pct=$(( (used_mb * 100) / total_mb ))
+
+            echo -e "  ${GREEN}Total:${NC}     ${total_mb} MB ($(( total_mb / 1024 )) GB)"
+            echo -e "  ${GREEN}Used:${NC}      ${used_mb} MB"
+            echo -e "  ${GREEN}Available:${NC} ${avail_mb} MB"
+            echo -e "  ${GREEN}Usage:${NC}     ${usage_pct}% used"
+            echo ""
+
+            # Check against threshold
+            if [[ "${usage_pct}" -ge "${MEMORY_THRESHOLD}" ]]; then
+                echo -e "  ${RED}⚠  WARNING: Memory usage (${usage_pct}%) exceeds threshold (${MEMORY_THRESHOLD}%)!${NC}"
             fi
         else
-            echo -e "${RED}Error: 'free' command not available and /proc/meminfo not found.${NC}"
+            echo -e "${RED}Error: Unable to determine memory size from sysctl.${NC}"
         fi
+    else
+        echo -e "${RED}Error: Memory monitoring commands ('free', '/proc/meminfo', or 'vm_stat') not available.${NC}"
     fi
     echo ""
 
@@ -590,10 +624,31 @@ generate_report() {
         echo ""
 
         echo "--- MEMORY INFORMATION ---"
-        if check_command free; then
+        if command -v free &>/dev/null; then
             free -h 2>/dev/null
         elif [[ -f /proc/meminfo ]]; then
             head -5 /proc/meminfo
+        elif command -v vm_stat &>/dev/null && command -v sysctl &>/dev/null; then
+            local r_page_size r_free_pages r_spec_pages r_total_bytes r_avail_bytes
+            r_page_size=$(vm_stat 2>/dev/null | grep -o "page size of [0-9]*" | awk '{print $4}')
+            [[ -z "${r_page_size}" ]] && r_page_size=4096
+            r_free_pages=$(vm_stat 2>/dev/null | awk '/Pages free/ {gsub(/\./, "", $3); print $3}')
+            r_spec_pages=$(vm_stat 2>/dev/null | awk '/Pages speculative/ {gsub(/\./, "", $3); print $3}')
+            r_free_pages=${r_free_pages:-0}
+            r_spec_pages=${r_spec_pages:-0}
+            r_total_bytes=$(sysctl -n hw.memsize 2>/dev/null)
+            if [[ -n "${r_total_bytes}" && "${r_total_bytes}" -gt 0 ]] 2>/dev/null; then
+                local r_total_mb=$(( r_total_bytes / 1024 / 1024 ))
+                r_avail_bytes=$(( (r_free_pages + r_spec_pages) * r_page_size ))
+                local r_avail_mb=$(( r_avail_bytes / 1024 / 1024 ))
+                local r_used_mb=$(( r_total_mb - r_avail_mb ))
+                local r_pct=$(( (r_used_mb * 100) / r_total_mb ))
+                echo "Total Memory     : ${r_total_mb} MB ($(( r_total_mb / 1024 )) GB)"
+                echo "Used Memory      : ${r_used_mb} MB (${r_pct}%)"
+                echo "Available Memory : ${r_avail_mb} MB"
+            else
+                echo "Memory info not available"
+            fi
         else
             echo "Memory info not available"
         fi
