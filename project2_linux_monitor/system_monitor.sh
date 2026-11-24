@@ -196,12 +196,22 @@ monitor_cpu() {
     echo -e "${GREEN}Top 10 CPU-Consuming Processes:${NC}"
     echo -e "${BOLD}  PID     CPU%   MEM%   COMMAND${NC}"
     if check_command ps; then
-        ps aux --sort=-%cpu 2>/dev/null | head -11 | tail -10 | \
-            awk '{printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, $11}' 2>/dev/null
-        # Fallback for macOS (ps aux --sort may not work)
-        if [[ $? -ne 0 ]]; then
-            ps aux 2>/dev/null | sort -nrk 3 | head -10 | \
-                awk '{printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, $11}'
+        if ps aux --sort=-%cpu &>/dev/null; then
+            ps aux --sort=-%cpu 2>/dev/null | head -11 | tail -10 | \
+                awk '{
+                    cmd = ""
+                    for (i = 11; i <= NF; i++) cmd = (i == 11) ? $i : cmd " " $i
+                    if (length(cmd) > 50) cmd = substr(cmd, 1, 47) "..."
+                    printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, cmd
+                }'
+        else
+            ps aux 2>/dev/null | tail -n +2 | sort -nrk 3 | head -10 | \
+                awk '{
+                    cmd = ""
+                    for (i = 11; i <= NF; i++) cmd = (i == 11) ? $i : cmd " " $i
+                    if (length(cmd) > 50) cmd = substr(cmd, 1, 47) "..."
+                    printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, cmd
+                }'
         fi
     fi
     echo ""
@@ -424,12 +434,22 @@ search_processes() {
             echo ""
             echo -e "${GREEN}All Running Processes (sorted by CPU usage):${NC}"
             echo -e "${BOLD}  PID      CPU%   MEM%   COMMAND${NC}"
-            ps aux --sort=-%cpu 2>/dev/null | tail -n +2 | \
-                awk '{printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, $11}' 2>/dev/null
-            # Fallback if --sort is not supported
-            if [[ $? -ne 0 ]]; then
+            if ps aux --sort=-%cpu &>/dev/null; then
+                ps aux --sort=-%cpu 2>/dev/null | tail -n +2 | \
+                    awk '{
+                        cmd = ""
+                        for (i = 11; i <= NF; i++) cmd = (i == 11) ? $i : cmd " " $i
+                        if (length(cmd) > 55) cmd = substr(cmd, 1, 52) "..."
+                        printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, cmd
+                    }'
+            else
                 ps aux 2>/dev/null | tail -n +2 | sort -nrk 3 | \
-                    awk '{printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, $11}'
+                    awk '{
+                        cmd = ""
+                        for (i = 11; i <= NF; i++) cmd = (i == 11) ? $i : cmd " " $i
+                        if (length(cmd) > 55) cmd = substr(cmd, 1, 52) "..."
+                        printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, cmd
+                    }'
             fi
             log_activity "Listed all running processes"
             ;;
@@ -443,7 +463,12 @@ search_processes() {
                 echo -e "${BOLD}  PID      CPU%   MEM%   COMMAND${NC}"
                 local results
                 results=$(ps aux 2>/dev/null | grep -i "${proc_name}" | grep -v "grep" | \
-                    awk '{printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, $11}')
+                    awk '{
+                        cmd = ""
+                        for (i = 11; i <= NF; i++) cmd = (i == 11) ? $i : cmd " " $i
+                        if (length(cmd) > 55) cmd = substr(cmd, 1, 52) "..."
+                        printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, cmd
+                    }')
                 if [[ -z "${results}" ]]; then
                     echo -e "  ${YELLOW}No processes found matching '${proc_name}'.${NC}"
                 else
@@ -461,7 +486,12 @@ search_processes() {
                 echo -e "${GREEN}Process with PID ${search_pid}:${NC}"
                 echo -e "${BOLD}  PID      CPU%   MEM%   COMMAND${NC}"
                 local result
-                result=$(ps aux 2>/dev/null | awk -v pid="${search_pid}" '$2 == pid {printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, $11}')
+                result=$(ps aux 2>/dev/null | awk -v pid="${search_pid}" '$2 == pid {
+                    cmd = ""
+                    for (i = 11; i <= NF; i++) cmd = (i == 11) ? $i : cmd " " $i
+                    if (length(cmd) > 55) cmd = substr(cmd, 1, 52) "..."
+                    printf "  %-8s %-6s %-6s %s\n", $2, $3, $4, cmd
+                }')
                 if [[ -z "${result}" ]]; then
                     echo -e "  ${YELLOW}No process found with PID ${search_pid}.${NC}"
                 else
@@ -620,7 +650,12 @@ generate_report() {
         fi
         echo ""
         echo "Top 10 CPU Processes:"
-        ps aux --sort=-%cpu 2>/dev/null | head -11 || ps aux 2>/dev/null | sort -nrk 3 | head -11
+        if ps aux --sort=-%cpu &>/dev/null; then
+            ps aux --sort=-%cpu 2>/dev/null | head -11
+        else
+            ps aux 2>/dev/null | head -1
+            ps aux 2>/dev/null | tail -n +2 | sort -nrk 3 | head -10
+        fi
         echo ""
 
         echo "--- MEMORY INFORMATION ---"
@@ -659,7 +694,7 @@ generate_report() {
         echo ""
 
         echo "--- ACTIVE PROCESSES COUNT ---"
-        echo "Total processes: $(ps aux 2>/dev/null | wc -l | tr -d ' ')"
+        echo "Total processes: $(ps aux 2>/dev/null | tail -n +2 | wc -l | tr -d ' ')"
         echo ""
 
         echo "================================================================================"
