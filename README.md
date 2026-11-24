@@ -7,7 +7,6 @@ A collection of five programming projects demonstrating proficiency in C program
 ```
 C_Programming_Summative/
 ├── README.md                          # This file
-├── .gitignore
 ├── project1_occupancy_monitor/        # Arduino Occupancy Monitoring System
 │   ├── occupancy_monitor.ino
 │   └── README.md
